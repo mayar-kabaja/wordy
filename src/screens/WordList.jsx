@@ -25,9 +25,8 @@ function pageNumbers(current, total) {
   return pages
 }
 
-export default function WordList({ entries, loading, onStartQuiz, onAdd, onRemove, onEdit }) {
+export default function WordList({ entries, loading, query, onAdd, onRemove, onEdit }) {
   const [filter, setFilter] = useState('all')
-  const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -89,14 +88,6 @@ export default function WordList({ entries, loading, onStartQuiz, onAdd, onRemov
           <h1 className="title" style={{ margin: 0 }}>your words</h1>
           <h1 className="title accent" style={{ margin: 0 }}>{counts.total} of them</h1>
         </div>
-        <div className="row">
-          <button className="btn btn-ghost" onClick={onAdd}>
-            add a word
-          </button>
-          <button className="btn btn-lime" onClick={onStartQuiz} disabled={!canQuiz}>
-            start a quiz · 20 questions
-          </button>
-        </div>
       </div>
 
       {!canQuiz && (
@@ -123,14 +114,6 @@ export default function WordList({ entries, loading, onStartQuiz, onAdd, onRemov
           <div className="tile-value tile-value--lg">{counts.due}</div>
         </div>
       </div>
-
-      <input
-        className="field"
-        style={{ maxWidth: 360, marginBottom: 16 }}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="search your words…"
-      />
 
       <div className="filters">
         {FILTERS.map((f) => (

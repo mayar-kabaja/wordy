@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import { fetchMyWords, removeWord, updateWord } from './lib/api'
+import { MIN_WORDS } from './lib/quiz'
 import Auth from './screens/Auth'
 import WordList from './screens/WordList'
 import AddWord from './screens/AddWord'
@@ -12,6 +13,7 @@ export default function App() {
   const [view, setView] = useState('words')
   const [quizKey, setQuizKey] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
+  const [query, setQuery] = useState('')
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -80,6 +82,7 @@ export default function App() {
   if (!session) return <Auth />
 
   const initial = (session.user.email || '?')[0].toLowerCase()
+  const canQuiz = entries.length >= MIN_WORDS
 
   return (
     <div className="shell">
@@ -88,7 +91,30 @@ export default function App() {
           <button className="brand brand-link" onClick={() => setView('words')}>
             wordy
           </button>
+          {view === 'words' && (
+            <input
+              className="field"
+              style={{ maxWidth: 260 }}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="search your words…"
+            />
+          )}
           <nav className="nav">
+            {view === 'words' && (
+              <>
+                <button className="btn btn-ghost" onClick={() => setShowAdd(true)}>
+                  add a word
+                </button>
+                <button
+                  className="btn btn-lime"
+                  onClick={() => setView('quiz')}
+                  disabled={!canQuiz}
+                >
+                  start a quiz · 20 questions
+                </button>
+              </>
+            )}
             <button className="tab" onClick={() => supabase.auth.signOut()}>
               log out
             </button>
@@ -105,7 +131,7 @@ export default function App() {
             <WordList
               entries={entries}
               loading={loading}
-              onStartQuiz={() => setView('quiz')}
+              query={query}
               onAdd={() => setShowAdd(true)}
               onRemove={handleRemove}
               onEdit={handleEditWord}
