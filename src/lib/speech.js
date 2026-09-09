@@ -26,3 +26,15 @@ export function speak(text) {
   u.rate = 0.9
   window.speechSynthesis.speak(u)
 }
+
+let unlocked = false
+
+// iOS Safari only allows speechSynthesis.speak() to fire audio when it's the
+// direct result of a tap. Call this once from inside a real click handler —
+// it plays a silent utterance that unlocks speech for the rest of the page,
+// so later calls from timers/effects (e.g. the quiz auto-reading a question) work too.
+export function unlockSpeech() {
+  if (!canSpeak || unlocked) return
+  unlocked = true
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(' '))
+}

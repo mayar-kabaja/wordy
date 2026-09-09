@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildSession, grade, summarise, SESSION_LENGTH, TYPES } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
-import { speak, canSpeak } from '../lib/speech'
+import { speak, canSpeak, unlockSpeech } from '../lib/speech'
 
 const MAX_QUESTIONS = 50
 const TIMER_OPTIONS = [0, 10, 15, 20, 30, 45, 60]
@@ -35,6 +35,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const current = session[index]
 
   function startQuiz() {
+    unlockSpeech()
     setSession(buildSession(frozen.current, questionCount))
     setStarted(true)
   }
