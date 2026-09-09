@@ -87,16 +87,6 @@ export default function App() {
         <header className="topbar">
           <div className="brand">wordy</div>
           <nav className="nav">
-            <button
-              className="tab"
-              aria-current={view === 'words'}
-              onClick={() => setView('words')}
-            >
-              my words
-            </button>
-            <button className="tab" aria-current={view === 'quiz'} onClick={() => setView('quiz')}>
-              quiz
-            </button>
             <button className="tab" onClick={() => supabase.auth.signOut()}>
               log out
             </button>
