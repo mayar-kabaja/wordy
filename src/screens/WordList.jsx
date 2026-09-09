@@ -59,7 +59,32 @@ export default function WordList({ entries, loading, query, onAdd, onRemove, onE
   }, [entries, filter, query])
 
   if (loading) {
-    return <p className="empty">loading your words…</p>
+    return (
+      <>
+        <div className="home-head">
+          <div>
+            <h1 className="title" style={{ margin: 0 }}>your words</h1>
+          </div>
+        </div>
+
+        <div className="tile-grid tile-grid--home">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="skeleton skeleton-tile" />
+          ))}
+        </div>
+
+        <div className="word-list">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card skeleton-card">
+              <div className="skeleton skeleton-line" />
+              <div className="skeleton skeleton-line" style={{ width: '90%', marginTop: 16 }} />
+              <div className="skeleton skeleton-line" style={{ width: '75%', marginTop: 8 }} />
+              <div className="skeleton skeleton-line" style={{ width: '55%', marginTop: 8 }} />
+            </div>
+          ))}
+        </div>
+      </>
+    )
   }
 
   if (entries.length === 0) {

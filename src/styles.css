@@ -311,6 +311,18 @@ h1.title.accent { color: var(--purple); }
 .tile-lime { background: var(--lime); }
 .tile-orange { background: var(--orange); }
 
+/* ---------- skeleton loading ---------- */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.skeleton { background: var(--line-soft); border-radius: 8px; animation: skeleton-pulse 1.3s ease-in-out infinite; }
+.skeleton-line { height: 12px; border-radius: 6px; }
+.skeleton-tile { height: 96px; border-radius: 28px; }
+.skeleton-card { min-height: 300px; }
+.skeleton-card .skeleton-line:first-child { height: 20px; width: 55%; margin-bottom: 18px; }
+
 .tag-pill { font-size: 12px; color: var(--faint); background: #faf6fc; border-radius: var(--r-pill); padding: 6px 13px; }
 
 .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }

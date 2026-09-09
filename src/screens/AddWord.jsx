@@ -132,6 +132,19 @@ export default function AddWord({ onAdded, onDone }) {
             </button>
           </div>
         </div>
+      ) : busy ? (
+        <div className="result-card">
+          <div className="result-head">
+            <div style={{ flex: 1 }}>
+              <div className="skeleton skeleton-line" style={{ width: '45%', height: 30, marginBottom: 10 }} />
+              <div className="skeleton skeleton-line" style={{ width: '30%', height: 13 }} />
+            </div>
+          </div>
+          <div className="skeleton skeleton-line" style={{ width: '20%', height: 11, marginBottom: 8 }} />
+          <div className="skeleton skeleton-line" style={{ width: '95%', marginBottom: 20 }} />
+          <div className="skeleton skeleton-line" style={{ width: '18%', height: 11, marginBottom: 8 }} />
+          <div className="skeleton skeleton-line" style={{ width: '80%' }} />
+        </div>
       ) : (
         <>
           <div className="placeholder">the word card will appear here</div>
