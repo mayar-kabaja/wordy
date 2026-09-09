@@ -85,7 +85,9 @@ export default function App() {
     <div className="shell">
       <div className="shell-inner shell-inner--wide">
         <header className="topbar">
-          <div className="brand">wordy</div>
+          <button className="brand brand-link" onClick={() => setView('words')}>
+            wordy
+          </button>
           <nav className="nav">
             <button className="tab" onClick={() => supabase.auth.signOut()}>
               log out
