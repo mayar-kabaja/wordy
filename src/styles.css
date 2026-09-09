@@ -581,6 +581,10 @@ h1.title.accent { color: var(--purple); }
 @media (max-width: 640px) {
   .topbar .btn-ghost, .topbar .btn-lime { display: none; }
 
+  .topbar { gap: 12px; }
+  .topbar .field { order: 3; flex-basis: 100%; }
+  .nav { margin-left: auto; gap: 10px; }
+
   .shell { padding-bottom: 110px; }
   .toast { bottom: 100px; }
 
