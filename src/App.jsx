@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
-import { fetchMyWords, removeWord, updateWord } from './lib/api'
+import { fetchMyWords, removeWord, updateWord, generateWord, addToMyWords } from './lib/api'
 import { MIN_WORDS } from './lib/quiz'
 import Auth from './screens/Auth'
 import WordList from './screens/WordList'
 import AddWord from './screens/AddWord'
 import Quiz from './screens/Quiz'
+
+const cacheKey = (userId) => `wordy:words:${userId}`
+const queueKey = (userId) => `wordy:queue:${userId}`
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -17,6 +20,8 @@ export default function App() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [queuedCount, setQueuedCount] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -27,14 +32,33 @@ export default function App() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true)
+    const goOffline = () => setIsOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [])
+
   const load = useCallback(async () => {
     if (!session) return
     setLoading(true)
     try {
-      setEntries(await fetchMyWords())
+      const data = await fetchMyWords()
+      setEntries(data)
       setError('')
+      localStorage.setItem(cacheKey(session.user.id), JSON.stringify(data))
     } catch (err) {
-      setError(err.message)
+      const cached = localStorage.getItem(cacheKey(session.user.id))
+      if (cached) {
+        setEntries(JSON.parse(cached))
+        setError('')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -48,7 +72,58 @@ export default function App() {
     }
   }, [session, load])
 
+  useEffect(() => {
+    if (!session) return
+    const list = JSON.parse(localStorage.getItem(queueKey(session.user.id)) || '[]')
+    setQueuedCount(list.length)
+  }, [session])
+
+  const processQueue = useCallback(async () => {
+    if (!session) return
+    const key = queueKey(session.user.id)
+    const pending = JSON.parse(localStorage.getItem(key) || '[]')
+    if (!pending.length) return
+
+    let added = 0
+    const remaining = []
+    for (const word of pending) {
+      try {
+        const data = await generateWord(word)
+        const link = await addToMyWords(data.id)
+        if (link) {
+          const { cached, already_yours, ...wordFields } = data
+          setEntries((list) => [{ ...link, words: wordFields }, ...list])
+        }
+        added++
+      } catch {
+        remaining.push(word)
+      }
+    }
+    localStorage.setItem(key, JSON.stringify(remaining))
+    setQueuedCount(remaining.length)
+    if (added) setError(`added ${added} queued word${added > 1 ? 's' : ''} from your offline list`)
+  }, [session])
+
+  useEffect(() => {
+    if (isOnline) processQueue()
+  }, [isOnline, processQueue])
+
+  function queueWord(word) {
+    const key = queueKey(session.user.id)
+    const list = JSON.parse(localStorage.getItem(key) || '[]')
+    list.push(word)
+    localStorage.setItem(key, JSON.stringify(list))
+    setQueuedCount(list.length)
+  }
+
+  useEffect(() => {
+    if (!error) return
+    const t = setTimeout(() => setError(''), 4000)
+    return () => clearTimeout(t)
+  }, [error])
+
   async function handleRemove(entry) {
+    if (!isOnline) return setError("you're offline — can't remove words right now")
     setEntries((list) => list.filter((e) => e.id !== entry.id))
     try {
       await removeWord(entry.id)
@@ -66,6 +141,7 @@ export default function App() {
   }
 
   async function handleEditWord(entry, fields) {
+    if (!isOnline) return setError("you're offline — can't save edits right now")
     const prev = entries
     setEntries((list) =>
       list.map((e) => (e.id === entry.id ? { ...e, words: { ...e.words, ...fields } } : e))
@@ -103,9 +179,20 @@ export default function App() {
           <nav className="nav">
             {view === 'words' && (
               <>
-                <button className="btn btn-ghost" onClick={() => setShowAdd(true)}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowAdd(true)}
+                  title={
+                    isOnline
+                      ? undefined
+                      : "you're offline — this word will be added automatically once you're back online"
+                  }
+                >
                   add a word
                 </button>
+                {queuedCount > 0 && (
+                  <span className="hint">{queuedCount} queued</span>
+                )}
                 <button
                   className="btn btn-lime"
                   onClick={() => setView('quiz')}
@@ -125,7 +212,13 @@ export default function App() {
         </header>
 
         <main className="page-content">
-          {error && <p className="error">{error}</p>}
+          {!isOnline && (
+            <div className="notice" style={{ marginBottom: 16 }}>
+              you're offline — showing your saved words. new words are saved and added
+              automatically once you're back online; editing and removing are paused until then.
+            </div>
+          )}
+          {error && <div className="toast">{error}</div>}
 
           {view === 'words' && (
             <WordList
@@ -158,7 +251,12 @@ export default function App() {
             <button className="modal-close" onClick={() => setShowAdd(false)} aria-label="close">
               ×
             </button>
-            <AddWord onAdded={handleWordAdded} onDone={() => setShowAdd(false)} />
+            <AddWord
+              isOnline={isOnline}
+              onQueue={queueWord}
+              onAdded={handleWordAdded}
+              onDone={() => setShowAdd(false)}
+            />
           </div>
         </div>
       )}

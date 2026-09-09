@@ -197,6 +197,25 @@ h1.title.accent { color: var(--purple); }
   line-height: 1.5;
 }
 
+@keyframes toast-in {
+  from { transform: translate(-50%, 12px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  padding: 13px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.28);
+  z-index: 50;
+  animation: toast-in 0.25s ease-out;
+}
+
 /* ---------- landing / login hero ---------- */
 
 .hero-grid {

@@ -2,23 +2,32 @@ import { useState } from 'react'
 import { generateWord, addToMyWords } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 
-export default function AddWord({ onAdded, onDone }) {
+export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
   const [word, setWord] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
+  const [queued, setQueued] = useState('')
 
   async function submit(e) {
     e.preventDefault()
     const trimmed = word.trim()
     if (!trimmed) return
 
+    if (!isOnline) {
+      onQueue(trimmed)
+      setQueued(trimmed)
+      setWord('')
+      return
+    }
+
     setBusy(true)
     setError('')
     setResult(null)
     setAdded(false)
+    setQueued('')
     try {
       const data = await generateWord(trimmed)
       setResult(data)
@@ -49,8 +58,9 @@ export default function AddWord({ onAdded, onDone }) {
     <>
       <h1 className="title">add a word</h1>
       <p className="sub">
-        Type just the word. The meaning, example sentence and pronunciation are filled in for you,
-        then it lands in your collection at level new.
+        {isOnline
+          ? 'Type just the word. The meaning, example sentence and pronunciation are filled in for you, then it lands in your collection at level new.'
+          : "You're offline — type the word and it'll be saved. The meaning, example and pronunciation get filled in and added to your collection automatically once you're back online."}
       </p>
 
       <form className="row" onSubmit={submit}>
@@ -64,7 +74,7 @@ export default function AddWord({ onAdded, onDone }) {
           disabled={busy}
         />
         <button className="btn btn-lime" disabled={busy || !word.trim()}>
-          {busy ? 'filling it in…' : 'fill it in'}
+          {!isOnline ? 'save for later' : busy ? 'filling it in…' : 'fill it in'}
         </button>
       </form>
 
@@ -74,7 +84,19 @@ export default function AddWord({ onAdded, onDone }) {
         </p>
       )}
 
-      {result ? (
+      {queued ? (
+        <div className="result-card">
+          <div className="result-name">✓ "{queued}" saved</div>
+          <p className="sub" style={{ marginTop: 8, marginBottom: 0 }}>
+            It'll be filled in and added to your words automatically once you're back online.
+          </p>
+          <div className="row" style={{ marginTop: 24 }}>
+            <button className="btn btn-ghost" onClick={onDone}>
+              done
+            </button>
+          </div>
+        </div>
+      ) : result ? (
         <div className="result-card">
           <div className="result-head">
             <div className="row" style={{ gap: 10, flexWrap: 'nowrap' }}>
