@@ -31,7 +31,9 @@ export async function generateWord(word) {
     } catch {
       if (error.message) message = error.message
     }
-    throw new Error(message)
+    const err = new Error(message)
+    err.status = error.context?.status
+    throw err
   }
   if (data?.error) throw new Error(data.error)
   return data

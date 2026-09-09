@@ -86,6 +86,7 @@ export default function App() {
 
     let added = 0
     const remaining = []
+    const failed = []
     for (const word of pending) {
       try {
         const data = await generateWord(word)
@@ -95,25 +96,41 @@ export default function App() {
           setEntries((list) => [{ ...link, words: wordFields }, ...list])
         }
         added++
-      } catch {
-        remaining.push(word)
+      } catch (err) {
+        // No status (network failure) or a 5xx means it's worth trying again
+        // later. Anything else — bad word, daily AI cap — will fail the same
+        // way every time, so keep it out of the queue instead of looping on it.
+        if (err.status === undefined || err.status >= 500) remaining.push(word)
+        else failed.push(word)
       }
     }
     localStorage.setItem(key, JSON.stringify(remaining))
     setQueuedCount(remaining.length)
-    if (added) setError(`added ${added} queued word${added > 1 ? 's' : ''} from your offline list`)
-  }, [session])
+
+    // Reconcile with the server and refresh the offline cache, which the
+    // per-word setEntries() above doesn't touch — do this before the toast
+    // below, since load() success clears `error` itself.
+    if (added) await load()
+
+    const parts = []
+    if (added) parts.push(`added ${added} word${added > 1 ? 's' : ''}`)
+    if (failed.length) {
+      parts.push(`couldn't add ${failed.map((w) => `"${w}"`).join(', ')} — removed from the queue`)
+    }
+    if (parts.length) setError(parts.join('; '))
+  }, [session, load])
 
   useEffect(() => {
     if (isOnline) processQueue()
   }, [isOnline, processQueue])
 
-  function queueWord(word) {
+  function queueWords(words) {
     const key = queueKey(session.user.id)
     const list = JSON.parse(localStorage.getItem(key) || '[]')
-    list.push(word)
+    list.push(...words)
     localStorage.setItem(key, JSON.stringify(list))
     setQueuedCount(list.length)
+    if (isOnline) processQueue()
   }
 
   useEffect(() => {
@@ -253,7 +270,7 @@ export default function App() {
             </button>
             <AddWord
               isOnline={isOnline}
-              onQueue={queueWord}
+              onQueue={queueWords}
               onAdded={handleWordAdded}
               onDone={() => setShowAdd(false)}
             />

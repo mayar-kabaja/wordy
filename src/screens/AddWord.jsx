@@ -9,25 +9,26 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
   const [result, setResult] = useState(null)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
-  const [queued, setQueued] = useState('')
+  const [queued, setQueued] = useState([])
 
   async function submit(e) {
     e.preventDefault()
-    const trimmed = word.trim()
-    if (!trimmed) return
+    const words = word.split(/[\n,]+/).map((w) => w.trim()).filter(Boolean)
+    if (!words.length) return
 
-    if (!isOnline) {
-      onQueue(trimmed)
-      setQueued(trimmed)
+    if (!isOnline || words.length > 1) {
+      onQueue(words)
+      setQueued(words)
       setWord('')
       return
     }
 
+    const trimmed = words[0]
     setBusy(true)
     setError('')
     setResult(null)
     setAdded(false)
-    setQueued('')
+    setQueued([])
     try {
       const data = await generateWord(trimmed)
       setResult(data)
@@ -54,27 +55,34 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
     }
   }
 
+  const wordCount = word.split(/[\n,]+/).filter((w) => w.trim()).length
+
   return (
     <>
       <h1 className="title">add a word</h1>
       <p className="sub">
         {isOnline
-          ? 'Type just the word. The meaning, example sentence and pronunciation are filled in for you, then it lands in your collection at level new.'
-          : "You're offline — type the word and it'll be saved. The meaning, example and pronunciation get filled in and added to your collection automatically once you're back online."}
+          ? 'Type a word, or paste a list (one per line or comma-separated) to add several at once. The meaning, example sentence and pronunciation are filled in for you.'
+          : "You're offline — type a word (or paste a list) and it'll be saved. Everything gets filled in and added to your collection automatically once you're back online."}
       </p>
 
       <form className="row" onSubmit={submit}>
-        <input
+        <textarea
           className="field"
-          style={{ flex: '1 1 240px' }}
+          style={{ flex: '1 1 240px', resize: 'vertical', borderRadius: 'var(--r-card)' }}
+          rows={2}
           value={word}
           onChange={(e) => setWord(e.target.value)}
-          placeholder="quixotic"
+          placeholder={'quixotic\nor paste a list, one per line'}
           autoFocus
           disabled={busy}
         />
         <button className="btn btn-lime" disabled={busy || !word.trim()}>
-          {!isOnline ? 'save for later' : busy ? 'filling it in…' : 'fill it in'}
+          {!isOnline || wordCount > 1
+            ? `save${wordCount > 1 ? ` ${wordCount} words` : ''}`
+            : busy
+              ? 'filling it in…'
+              : 'fill it in'}
         </button>
       </form>
 
@@ -84,11 +92,15 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
         </p>
       )}
 
-      {queued ? (
+      {queued.length ? (
         <div className="result-card">
-          <div className="result-name">✓ "{queued}" saved</div>
+          <div className="result-name">
+            ✓ {queued.length === 1 ? `"${queued[0]}" saved` : `${queued.length} words saved`}
+          </div>
           <p className="sub" style={{ marginTop: 8, marginBottom: 0 }}>
-            It'll be filled in and added to your words automatically once you're back online.
+            {isOnline
+              ? "They're being filled in and added to your words now."
+              : "They'll be filled in and added to your words automatically once you're back online."}
           </p>
           <div className="row" style={{ marginTop: 24 }}>
             <button className="btn btn-ghost" onClick={onDone}>
