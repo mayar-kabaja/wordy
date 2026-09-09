@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import WordyMark from '../components/WordyMark'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i
 const TYPOS = {
@@ -118,7 +119,10 @@ export default function Auth() {
             <div className="hero-grid">
               <div>
                 <div className="eyebrow">your words, always with you</div>
-                <h1 className="hero-h1">wordy</h1>
+                <div className="row" style={{ alignItems: 'center', gap: 14, marginBottom: 4 }}>
+                  <WordyMark size={56} />
+                  <h1 className="hero-h1" style={{ margin: 0 }}>wordy</h1>
+                </div>
                 <h1 className="hero-h1 accent">every day</h1>
                 <p className="hero-sub">
                   Type a word — an AI fills in the rest. Your collection stays yours.
