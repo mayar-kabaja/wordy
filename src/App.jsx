@@ -262,6 +262,33 @@ export default function App() {
         </main>
       </div>
 
+      <nav className="bottom-tabs">
+        <button
+          className="bottom-tab"
+          aria-current={view === 'words' && !showAdd}
+          onClick={() => {
+            setShowAdd(false)
+            setView('words')
+          }}
+        >
+          my words
+        </button>
+        <button className="bottom-tab" aria-current={showAdd} onClick={() => setShowAdd(true)}>
+          add
+        </button>
+        <button
+          className="bottom-tab bottom-tab-quiz"
+          aria-current={view === 'quiz'}
+          disabled={!canQuiz}
+          onClick={() => {
+            setShowAdd(false)
+            setView('quiz')
+          }}
+        >
+          quiz
+        </button>
+      </nav>
+
       {showAdd && (
         <div className="modal-overlay" onClick={() => setShowAdd(false)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>

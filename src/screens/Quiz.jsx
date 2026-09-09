@@ -6,6 +6,14 @@ import { speak, canSpeak } from '../lib/speech'
 const MAX_QUESTIONS = 50
 const TIMER_OPTIONS = [0, 10, 15, 20, 30, 45, 60]
 const DEFAULT_TIMER = 20
+const QUESTION_COUNT_PRESETS = [10, 20, 40]
+
+function tierLabel(score, total) {
+  const pct = score / total
+  if (pct >= 0.9) return 'nice!'
+  if (pct >= 0.6) return 'not bad'
+  return 'keep practicing'
+}
 
 export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   // The pool is frozen once, from the list as it was when the quiz screen
@@ -21,6 +29,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const [index, setIndex] = useState(0)
   const [chosen, setChosen] = useState(null)
   const [score, setScore] = useState(0)
+  const [streak, setStreak] = useState(0)
   const [done, setDone] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [timeLeft, setTimeLeft] = useState(timerSeconds)
@@ -76,29 +85,34 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
           }}
         >
           <span className="label" style={{ marginLeft: 0 }}>number of questions</span>
-          <input
-            type="number"
-            className="field"
-            min={1}
-            max={maxQuestions}
-            value={questionCount}
-            onChange={(e) =>
-              setQuestionCount(Math.max(1, Math.min(maxQuestions, Number(e.target.value) || 1)))
-            }
-          />
-
-          <span className="label" style={{ marginLeft: 0, marginTop: 18 }}>time per question</span>
-          <select
-            className="field"
-            value={timerSeconds}
-            onChange={(e) => setTimerSeconds(Number(e.target.value))}
-          >
-            {TIMER_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s === 0 ? 'no limit' : `${s} seconds`}
-              </option>
+          <div className="choice-row">
+            {QUESTION_COUNT_PRESETS.filter((n) => n <= maxQuestions).map((n) => (
+              <button
+                key={n}
+                type="button"
+                className="choice-pill"
+                aria-pressed={questionCount === n}
+                onClick={() => setQuestionCount(n)}
+              >
+                {n} questions
+              </button>
             ))}
-          </select>
+          </div>
+
+          <span className="label" style={{ marginLeft: 0 }}>time per question</span>
+          <div className="choice-row">
+            {TIMER_OPTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className="choice-pill"
+                aria-pressed={timerSeconds === s}
+                onClick={() => setTimerSeconds(s)}
+              >
+                {s === 0 ? 'no timer' : `${s}s`}
+              </button>
+            ))}
+          </div>
 
           <div className="row" style={{ marginTop: 22 }}>
             <button className="btn btn-lime">start quiz</button>
@@ -126,7 +140,12 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     if (chosen !== null) return
     const correct = i === current.question.answer
     setChosen(i)
-    if (correct) setScore((s) => s + 1)
+    if (correct) {
+      setScore((s) => s + 1)
+      setStreak((s) => s + 1)
+    } else {
+      setStreak(0)
+    }
 
     const id = current.entry.id
     working.current[id] = grade(working.current[id] ?? current.entry, correct)
@@ -135,6 +154,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   function timeout() {
     if (chosen !== null) return
     setChosen(-1)
+    setStreak(0)
     const id = current.entry.id
     working.current[id] = grade(working.current[id] ?? current.entry, false)
   }
@@ -182,6 +202,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
           {score}
           <span style={{ color: 'var(--faint)', fontSize: '0.5em' }}> / {session.length}</span>
         </p>
+        <p className="sub" style={{ marginTop: -6 }}>{tierLabel(score, session.length)}</p>
 
         <div className="tile-grid" style={{ textAlign: 'left', maxWidth: 500, margin: '26px auto 32px' }}>
           <div className="tile tile-pink">
@@ -226,6 +247,14 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
         {timerSeconds > 0 && (
           <span className={`timer${timeLeft <= 5 ? ' timer-low' : ''}`}>{timeLeft}s</span>
         )}
+        {streak > 1 && (
+          <span className="streak-box" title="current streak">
+            {streak}
+          </span>
+        )}
+      </div>
+
+      <div className="row" style={{ marginBottom: 18 }}>
         <span className="qtype">{q.type}</span>
       </div>
 
