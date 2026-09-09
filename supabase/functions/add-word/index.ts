@@ -65,7 +65,12 @@ async function generate(word: string, apiKey: string) {
     })
   })
 
-  if (!res.ok) throw new Error(`groq responded ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    const err = new Error(`groq ${res.status}: ${body.slice(0, 300)}`)
+    ;(err as Error & { status?: number }).status = res.status
+    throw err
+  }
 
   const payload = await res.json()
   const text = payload?.choices?.[0]?.message?.content
@@ -161,8 +166,23 @@ Deno.serve(async (req) => {
     let generated
     try {
       generated = await generate(word, groqKey)
-    } catch {
-      return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
+    } catch (err) {
+      const status = (err as Error & { status?: number }).status
+      const retryable = status === 429 || (status !== undefined && status >= 500)
+      if (retryable) {
+        // Most Groq failures at this point are a transient rate-limit or
+        // server hiccup, not a real outage — one short retry clears most of them.
+        await new Promise((r) => setTimeout(r, 800))
+        try {
+          generated = await generate(word, groqKey)
+        } catch (err2) {
+          console.error('groq generate failed (after retry):', err2)
+          return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
+        }
+      } else {
+        console.error('groq generate failed:', err)
+        return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
+      }
     }
     if (!generated) {
       return json({ error: `No entry could be written for "${word}". Check the spelling.` }, 422)
