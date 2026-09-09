@@ -25,19 +25,8 @@ export function speak(text) {
   u.lang = v?.lang || 'en-GB'
   u.rate = 0.9
   window.speechSynthesis.speak(u)
-}
-
-let unlocked = false
-
-// iOS Safari only allows speechSynthesis.speak() to fire audio when it's the
-// direct result of a tap. Call this once from inside a real click handler —
-// it unlocks speech for the rest of the page, so later calls from timers/
-// effects (e.g. the quiz auto-reading a question) work too. The utterance
-// must have real (non-blank) text — Chrome has a long-standing bug where
-// near-empty utterances never fire their 'end' event and jam every speak()
-// call after them, so this can't reuse an empty string like a true no-op would.
-export function unlockSpeech() {
-  if (!canSpeak || unlocked) return
-  unlocked = true
-  window.speechSynthesis.speak(new SpeechSynthesisUtterance('ok'))
+  // Chrome has a long-standing bug where speak() can silently jam without
+  // ever starting — pausing and resuming right after reliably kicks it loose.
+  window.speechSynthesis.pause()
+  window.speechSynthesis.resume()
 }

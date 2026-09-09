@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildSession, grade, summarise, SESSION_LENGTH, TYPES } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
-import { speak, canSpeak, unlockSpeech } from '../lib/speech'
+import { speak, canSpeak } from '../lib/speech'
 
 const MAX_QUESTIONS = 50
 const TIMER_OPTIONS = [0, 10, 15, 20, 30, 45, 60]
@@ -35,14 +35,13 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const current = session[index]
 
   function startQuiz() {
-    unlockSpeech()
-    setSession(buildSession(frozen.current, questionCount))
+    const built = buildSession(frozen.current, questionCount)
+    setSession(built)
     setStarted(true)
+    // Called synchronously from this click, so it still counts as a user
+    // gesture for autoplay policies — a useEffect firing after commit wouldn't.
+    if (built[0]?.question.speak) speak(built[0].question.speak)
   }
-
-  useEffect(() => {
-    if (current?.question.speak) speak(current.question.speak)
-  }, [index, current])
 
   // Per-question countdown. Only runs while unanswered; hitting zero counts
   // as a wrong answer so the session can't stall on one question.
@@ -156,8 +155,10 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
 
   async function next() {
     if (index + 1 < session.length) {
+      const upcoming = session[index + 1]
       setIndex((i) => i + 1)
       setChosen(null)
+      if (upcoming?.question.speak) speak(upcoming.question.speak)
       return
     }
 
