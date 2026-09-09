@@ -144,7 +144,7 @@ export default function WordCard({ entry, onRemove, onEdit }) {
           <span className="row" style={{ marginLeft: 'auto', gap: 12 }}>
             {canSpeak && (
               <button className="speak speak-sm" onClick={() => speak(w.word)} aria-label={`listen to ${w.word}`}>
-                🔊
+                ▸
               </button>
             )}
             {onEdit && (

@@ -263,7 +263,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
                   }}
                   aria-label={`listen to ${opt}`}
                 >
-                  🔊
+                  ▸
                 </button>
               )}
             </div>
