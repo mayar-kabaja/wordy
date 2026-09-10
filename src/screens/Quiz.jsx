@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { buildSession, grade, summarise, SESSION_LENGTH, TYPES } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
+import { playCorrect, playWrong, playQuizStart, playQuizComplete } from '../lib/sound'
 
 const MAX_QUESTIONS = 50
 const TIMER_OPTIONS = [0, 10, 15, 20, 30, 45, 60]
@@ -47,6 +48,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     const built = buildSession(frozen.current, questionCount)
     setSession(built)
     setStarted(true)
+    playQuizStart()
     // Called synchronously from this click, so it still counts as a user
     // gesture for autoplay policies — a useEffect firing after commit wouldn't.
     if (built[0]?.question.speak) speak(built[0].question.speak)
@@ -143,8 +145,10 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     if (correct) {
       setScore((s) => s + 1)
       setStreak((s) => s + 1)
+      playCorrect()
     } else {
       setStreak(0)
+      playWrong()
     }
 
     const id = current.entry.id
@@ -155,6 +159,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     if (chosen !== null) return
     setChosen(-1)
     setStreak(0)
+    playWrong()
     const id = current.entry.id
     working.current[id] = grade(working.current[id] ?? current.entry, false)
   }
@@ -183,6 +188,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     }
 
     setDone(true)
+    playQuizComplete()
     const touched = new Set(session.map((q) => q.entry.id))
     const updates = [...touched].map((id) => ({ id, ...working.current[id] }))
     try {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { generateWord, addToMyWords } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
+import { playWordAdded } from '../lib/sound'
 
 export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
   const [word, setWord] = useState('')
@@ -46,6 +47,7 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
     try {
       const link = await addToMyWords(result.id)
       setAdded(true)
+      playWordAdded()
       const { cached, already_yours, ...wordFields } = result
       onAdded(link ? { ...link, words: wordFields } : null)
     } catch (err) {
