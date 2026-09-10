@@ -40,8 +40,15 @@ async function lookup(word: string, apiKey: string) {
 
   if (res.status === 404) return null // genuinely not in their dictionary
 
+  if (res.status === 401) {
+    const err = new Error('word orb rejected the API key — check WORDORB_API_KEY in Supabase secrets')
+    ;(err as Error & { status?: number }).status = res.status
+    throw err
+  }
+
   if (!res.ok) {
-    const err = new Error(`word orb ${res.status}`)
+    const bodyText = await res.text().catch(() => '')
+    const err = new Error(`word orb ${res.status}: ${bodyText.slice(0, 200)}`)
     ;(err as Error & { status?: number }).status = res.status
     throw err
   }
@@ -128,6 +135,9 @@ Deno.serve(async (req) => {
         }
       } else {
         console.error('word orb lookup failed:', err)
+        // A bad key won't fix itself on retry — say so plainly instead of
+        // hiding it behind "busy", which looks identical to a real outage.
+        if (status === 401) return json({ error: (err as Error).message }, 500)
         return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
       }
     }
