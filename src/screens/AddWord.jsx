@@ -62,8 +62,8 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
       <h1 className="title">add a word</h1>
       <p className="sub">
         {isOnline
-          ? 'Type a word, or paste a list (one per line or comma-separated) to add several at once. The meaning, example sentence and pronunciation are filled in for you.'
-          : "You're offline — type a word (or paste a list) and it'll be saved. Everything gets filled in and added to your collection automatically once you're back online."}
+          ? 'Type a word, or paste a list (one per line or comma-separated) to add several at once. The meaning and pronunciation are looked up for you.'
+          : "You're offline — type a word (or paste a list) and it'll be saved. Everything gets looked up and added to your collection automatically once you're back online."}
       </p>
 
       <form className="row" onSubmit={submit}>
@@ -130,7 +130,7 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
               </div>
             </div>
             <span className={`source-tag ${result.cached ? 'source-cached' : 'source-ai'}`}>
-              {result.cached ? 'already in the dictionary' : 'written by ai'}
+              {result.cached ? 'already in the dictionary' : 'newly looked up'}
             </span>
           </div>
 
@@ -139,12 +139,14 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
             <p style={{ margin: 0, fontSize: 17, lineHeight: 1.45 }}>{result.meaning}</p>
           </div>
 
-          <div className="result-block">
-            <span className="result-label">example</span>
-            <p style={{ margin: 0, fontSize: 16, lineHeight: 1.45, fontStyle: 'italic', color: 'var(--ink-soft)' }}>
-              {result.example}
-            </p>
-          </div>
+          {result.example && (
+            <div className="result-block">
+              <span className="result-label">example</span>
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.45, fontStyle: 'italic', color: 'var(--ink-soft)' }}>
+                {result.example}
+              </p>
+            </div>
+          )}
 
           {result.note && (
             <div className="result-block">
@@ -183,8 +185,7 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
         <>
           <div className="placeholder">the word card will appear here</div>
           <p className="quota">
-            Words already in the shared dictionary are instant and free. Brand-new ones are capped at
-            50 a day.
+            Looked up from a verified dictionary — no daily limit.
           </p>
         </>
       )}

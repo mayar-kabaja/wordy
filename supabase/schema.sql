@@ -1,14 +1,19 @@
--- Shared dictionary: one row per unique word, across all users.
+-- Shared dictionary: one row per unique word, across all users. Entries come
+-- from Word Orb (deterministic lookup, no per-call AI cost) or, for older
+-- rows, Groq. Word Orb doesn't return an example sentence or an informal
+-- "say it like" guide, so example/say/ipa are nullable — the UI already
+-- hides them when absent. `note` doubles as etymology for Word Orb rows.
 create table words (
   id uuid primary key default gen_random_uuid(),
   word text not null,
   meaning text not null,
-  example text not null,
+  example text,
   note text,
-  say text not null,
-  ipa text not null,
+  say text,
+  ipa text,
   emoji text,
-  source text not null check (source in ('ai', 'manual')),
+  part_of_speech text,
+  source text not null check (source in ('ai', 'manual', 'wordorb')),
   created_at timestamptz not null default now()
 );
 create unique index words_word_lower_idx on words (lower(word));
@@ -54,37 +59,3 @@ create policy "users manage their own words"
 
 -- Quiz sessions read the whole list sorted by due_at, so index that.
 create index user_words_user_due_idx on user_words (user_id, due_at);
-
--- ---------------------------------------------------------------------------
--- Added beyond the design doc: the daily cap in section 5 needs somewhere to
--- count. Only words that actually triggered an AI call are counted here —
--- adding a word already in the shared dictionary never touches this table.
--- ---------------------------------------------------------------------------
-create table ai_usage (
-  user_id uuid not null references auth.users (id) on delete cascade,
-  day date not null default current_date,
-  count int not null default 0,
-  primary key (user_id, day)
-);
-
-alter table ai_usage enable row level security;
--- No policies at all: written only by the Edge Function's service role.
-
-create or replace function bump_ai_usage(p_user uuid, p_limit int)
-returns boolean
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  used int;
-begin
-  insert into ai_usage (user_id, day, count)
-  values (p_user, current_date, 1)
-  on conflict (user_id, day)
-    do update set count = ai_usage.count + 1
-  returning count into used;
-
-  return used <= p_limit;
-end;
-$$;
