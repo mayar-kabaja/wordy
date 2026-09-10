@@ -15,7 +15,6 @@ export default function App() {
   const [checking, setChecking] = useState(true)
   const [view, setView] = useState('words')
   const [quizKey, setQuizKey] = useState(0)
-  const [showAdd, setShowAdd] = useState(false)
   const [query, setQuery] = useState('')
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -198,7 +197,7 @@ export default function App() {
               <>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => setShowAdd(true)}
+                  onClick={() => setView('add')}
                   title={
                     isOnline
                       ? undefined
@@ -242,9 +241,18 @@ export default function App() {
               entries={entries}
               loading={loading}
               query={query}
-              onAdd={() => setShowAdd(true)}
+              onAdd={() => setView('add')}
               onRemove={handleRemove}
               onEdit={handleEditWord}
+            />
+          )}
+
+          {view === 'add' && (
+            <AddWord
+              isOnline={isOnline}
+              onQueue={queueWords}
+              onAdded={handleWordAdded}
+              onDone={() => setView('words')}
             />
           )}
 
@@ -263,47 +271,21 @@ export default function App() {
       </div>
 
       <nav className="bottom-tabs">
-        <button
-          className="bottom-tab"
-          aria-current={view === 'words' && !showAdd}
-          onClick={() => {
-            setShowAdd(false)
-            setView('words')
-          }}
-        >
+        <button className="bottom-tab" aria-current={view === 'words'} onClick={() => setView('words')}>
           my words
         </button>
-        <button className="bottom-tab" aria-current={showAdd} onClick={() => setShowAdd(true)}>
+        <button className="bottom-tab" aria-current={view === 'add'} onClick={() => setView('add')}>
           add
         </button>
         <button
           className="bottom-tab bottom-tab-quiz"
           aria-current={view === 'quiz'}
           disabled={!canQuiz}
-          onClick={() => {
-            setShowAdd(false)
-            setView('quiz')
-          }}
+          onClick={() => setView('quiz')}
         >
           quiz
         </button>
       </nav>
-
-      {showAdd && (
-        <div className="modal-overlay" onClick={() => setShowAdd(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowAdd(false)} aria-label="close">
-              ×
-            </button>
-            <AddWord
-              isOnline={isOnline}
-              onQueue={queueWords}
-              onAdded={handleWordAdded}
-              onDone={() => setShowAdd(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

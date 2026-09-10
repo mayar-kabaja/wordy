@@ -386,6 +386,8 @@ h1.title.accent { color: var(--purple); }
   width: 32px; height: 32px;
   display: grid; place-items: center;
   font-size: 14px;
+  line-height: 1;
+  padding: 0 0 0 2px;
   color: var(--muted);
 }
 .speak:hover { border-color: var(--lav); color: var(--lav-deep); }
@@ -508,6 +510,8 @@ h1.title.accent { color: var(--purple); }
   background: var(--lav);
   color: #fff;
   font-size: 30px;
+  line-height: 1;
+  padding: 0 0 0 4px;
   display: grid; place-items: center;
   margin: 0 auto 26px;
 }
@@ -519,47 +523,6 @@ h1.title.accent { color: var(--purple); }
   letter-spacing: -0.04em;
   margin: 0;
 }
-
-/* ---------- modal ---------- */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 10, 30, 0.45);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 60px 20px;
-  overflow-y: auto;
-  z-index: 50;
-}
-
-.modal-panel {
-  position: relative;
-  background: #fff;
-  border-radius: var(--r-big);
-  padding: clamp(24px, 5vw, 40px);
-  width: 100%;
-  max-width: 640px;
-  box-shadow: 0 20px 60px rgba(60, 30, 60, 0.25);
-}
-
-.modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: #fff;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-}
-.modal-close:hover { color: var(--ink); border-color: var(--lav); }
 
 /* ---------- quiz setup choice pills ---------- */
 
@@ -612,9 +575,6 @@ h1.title.accent { color: var(--purple); }
   }
   .bottom-tab[aria-current='true'] { background: var(--ink); border-color: var(--ink); color: #fff; }
   .bottom-tab-quiz[aria-current='true'] { background: var(--lime); border-color: var(--lime); color: var(--ink); }
-
-  .modal-overlay { padding: 0; align-items: stretch; }
-  .modal-panel { border-radius: 0; max-width: none; min-height: 100vh; box-shadow: none; }
 
   .card { padding: 18px 20px; }
   .word-foot { gap: 14px; }
