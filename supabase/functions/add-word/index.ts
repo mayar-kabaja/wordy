@@ -3,6 +3,7 @@
 // goes straight from the client to Postgres, with RLS deciding what's visible.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import pluralize from 'https://esm.sh/pluralize@8'
 
 const MAX_WORD_LENGTH = 40
 
@@ -169,7 +170,18 @@ Deno.serve(async (req) => {
       return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
     }
     if (!found) {
-      return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
+      // Word Orb only stores singular headwords ("outlier", not "outliers").
+      // One extra try at the singular form before giving up — same reason
+      // the phrasal-verb list stores every inflected form, just handled
+      // algorithmically here since regular/irregular plurals are a solved,
+      // well-tested problem rather than something worth hand-rolling.
+      const singular = pluralize.singular(word)
+      if (singular !== word) {
+        found = await lookup(singular, wordOrbKey!).catch(() => null)
+      }
+      if (!found) {
+        return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
+      }
     }
 
     const { data: inserted, error: insertError } = await admin
