@@ -48,6 +48,19 @@ async function lookup(word: string, apiKey: string) {
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => '')
+
+    // Word Orb returns this (still as a 500) when it structurally can't
+    // produce an entry for the input — e.g. a phrase or hyphenated compound
+    // instead of a single word. Retrying won't change that outcome, so treat
+    // it the same as a 404 instead of burning retries or queueing forever.
+    let parsed: { error?: string } | undefined
+    try {
+      parsed = JSON.parse(bodyText)
+    } catch {
+      /* not JSON — fall through to the generic error below */
+    }
+    if (parsed?.error === 'Generation failed') return null
+
     const err = new Error(`word orb ${res.status}: ${bodyText.slice(0, 200)}`)
     ;(err as Error & { status?: number }).status = res.status
     throw err
