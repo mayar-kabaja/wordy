@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { generateWord, addToMyWords } from '../lib/api'
+import { generateWord, addToMyWords, isRetryable } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 import { playWordAdded } from '../lib/sound'
 
@@ -35,7 +35,16 @@ export default function AddWord({ isOnline, onQueue, onAdded, onDone }) {
       setResult(data)
       setWord('')
     } catch (err) {
-      setError(err.message)
+      if (isRetryable(err)) {
+        // The word service hiccupped — don't scare the user with an error for
+        // something that isn't their fault. Queue it like an offline add; it
+        // keeps retrying in the background and shows up once it lands.
+        onQueue([trimmed])
+        setQueued([trimmed])
+        setWord('')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setBusy(false)
     }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
-import { fetchMyWords, removeWord, updateWord, generateWord, addToMyWords } from './lib/api'
+import { fetchMyWords, removeWord, updateWord, generateWord, addToMyWords, isRetryable } from './lib/api'
 import { MIN_WORDS } from './lib/quiz'
 import Auth from './screens/Auth'
 import WordList from './screens/WordList'
@@ -96,10 +96,7 @@ export default function App() {
         }
         added++
       } catch (err) {
-        // No status (network failure) or a 5xx means it's worth trying again
-        // later. Anything else — bad word, daily AI cap — will fail the same
-        // way every time, so keep it out of the queue instead of looping on it.
-        if (err.status === undefined || err.status >= 500) remaining.push(word)
+        if (isRetryable(err)) remaining.push(word)
         else failed.push(word)
       }
     }

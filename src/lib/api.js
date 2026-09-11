@@ -39,6 +39,14 @@ export async function generateWord(word) {
   return data
 }
 
+// True only for failures the edge function itself flagged as transient — a
+// network drop, a rate limit, or "busy" after it already retried server-side.
+// A bad word, a missing dictionary entry, or a misconfigured key will fail
+// the same way every time, so those aren't worth queueing or retrying.
+export function isRetryable(err) {
+  return err.status === undefined || err.status === 429 || err.status === 502
+}
+
 // Returns the new user_words row so the caller can add it to local state
 // directly, instead of re-fetching the entire list for one new word.
 export async function addToMyWords(wordId) {
