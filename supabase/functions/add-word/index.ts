@@ -167,9 +167,12 @@ Deno.serve(async (req) => {
       .single()
 
     if (insertError) {
-      // Two people can add the same new word at the same moment; the unique
-      // index catches the loser, who then just reads the winner's row.
-      const { data: raced } = await admin.from('words').select('*').ilike('word', word).maybeSingle()
+      // Either a genuine race (two people adding the same word at once), or
+      // Word Orb normalized the spelling differently than what was typed
+      // (e.g. stripped a space) so this word is already stored under its own
+      // canonical spelling. Either way, re-read using that canonical spelling
+      // — not the raw input — since that's what's actually in the table.
+      const { data: raced } = await admin.from('words').select('*').ilike('word', found.word).maybeSingle()
       if (!raced) return json({ error: 'Could not save that word.' }, 500)
       row = raced
     } else {
