@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import WordyMark from '../components/WordyMark'
-import InstallLink from '../components/InstallLink'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i
 const TYPOS = {
@@ -212,7 +211,6 @@ export default function Auth() {
           </div>
         )}
       </div>
-      <InstallLink />
     </div>
   )
 }
