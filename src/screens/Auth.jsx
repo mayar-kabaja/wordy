@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import WordyMark from '../components/WordyMark'
+import InstallLink from '../components/InstallLink'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i
 const TYPOS = {
@@ -183,6 +184,7 @@ export default function Auth() {
                   no password — we email you a one-time link. new here? the same link creates your
                   account.
                 </p>
+                <InstallLink />
               </div>
 
               <div className="hero-art">
