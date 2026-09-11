@@ -20,7 +20,7 @@ export default function InstallLink() {
 
   return (
     <div className="a2hs-toast">
-      <div className="a2hs-icon" />
+      <img className="a2hs-icon" src="/favicon.svg" alt="" />
       <div className="a2hs-body">
         <p className="a2hs-title">keep wordy one tap away</p>
         <p className="a2hs-text">

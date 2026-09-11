@@ -251,7 +251,7 @@ h1.title.accent { color: var(--purple); }
   height: 46px;
   flex: none;
   border-radius: 13px;
-  background: linear-gradient(150deg, var(--pink) 0%, var(--purple) 100%);
+  display: block;
 }
 
 .a2hs-body { flex: 1; min-width: 0; }
