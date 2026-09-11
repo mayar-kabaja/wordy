@@ -34,11 +34,15 @@ export default function InstallLink() {
   }
 
   return (
-    <p className="hint" style={{ marginTop: 10 }}>
-      <button type="button" className="link" onClick={handleClick}>
+    <div className="toast">
+      <button
+        type="button"
+        onClick={handleClick}
+        style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', padding: 0 }}
+      >
         add wordy to your home screen
+        {showIosHint && ' — tap the share icon, then "add to home screen"'}
       </button>
-      {showIosHint && <span> — tap the share icon, then "add to home screen"</span>}
-    </p>
+    </div>
   )
 }

@@ -184,7 +184,6 @@ export default function Auth() {
                   no password — we email you a one-time link. new here? the same link creates your
                   account.
                 </p>
-                <InstallLink />
               </div>
 
               <div className="hero-art">
@@ -213,6 +212,7 @@ export default function Auth() {
           </div>
         )}
       </div>
+      <InstallLink />
     </div>
   )
 }
