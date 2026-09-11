@@ -115,31 +115,33 @@ Deno.serve(async (req) => {
   let row = existing
   const cached = Boolean(existing)
 
-  // 2. Miss: look it up on Word Orb.
+  // 2. Miss: look it up on Word Orb. Up to 3 attempts total (one initial
+  //    try plus two retries with backoff) before giving up — a single
+  //    transient hiccup shouldn't reach the user as a visible error.
+  const RETRY_DELAYS_MS = [600, 1500]
   if (!row) {
     let found
-    try {
-      found = await lookup(word, wordOrbKey)
-    } catch (err) {
-      const status = (err as Error & { status?: number }).status
-      const retryable = status === undefined || status === 429 || status >= 500
-      if (retryable) {
-        // Most failures here are a transient rate-limit or server hiccup,
-        // not a real outage — one short retry clears most of them.
-        await new Promise((r) => setTimeout(r, 800))
-        try {
-          found = await lookup(word, wordOrbKey)
-        } catch (err2) {
-          console.error('word orb lookup failed (after retry):', err2)
-          return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
-        }
-      } else {
-        console.error('word orb lookup failed:', err)
-        // A bad key won't fix itself on retry — say so plainly instead of
-        // hiding it behind "busy", which looks identical to a real outage.
-        if (status === 401) return json({ error: (err as Error).message }, 500)
-        return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
+    let lastErr
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        found = await lookup(word, wordOrbKey)
+        lastErr = null
+        break
+      } catch (err) {
+        lastErr = err
+        const status = (err as Error & { status?: number }).status
+        const retryable = status === undefined || status === 429 || status >= 500
+        if (!retryable || attempt === RETRY_DELAYS_MS.length) break
+        await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt]))
       }
+    }
+    if (lastErr) {
+      const status = (lastErr as Error & { status?: number }).status
+      console.error('word orb lookup failed:', lastErr)
+      // A bad key won't fix itself on retry — say so plainly instead of
+      // hiding it behind "busy", which looks identical to a real outage.
+      if (status === 401) return json({ error: (lastErr as Error).message }, 500)
+      return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
     }
     if (!found) {
       return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
