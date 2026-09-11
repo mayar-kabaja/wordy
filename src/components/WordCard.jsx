@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { speak, canSpeak } from '../lib/speech'
+import { timeAgo } from '../lib/time'
 
 export default function WordCard({ entry, onRemove, onEdit }) {
   const w = entry.words
@@ -118,7 +119,12 @@ export default function WordCard({ entry, onRemove, onEdit }) {
           </div>
           <div className="wc-say">{say}</div>
         </div>
-        <span className={`chip chip-${entry.level}`}>{entry.level}</span>
+        <span className="row" style={{ gap: 8, alignItems: 'center' }}>
+          <span className="hint" title={new Date(entry.added_at).toLocaleString()}>
+            {timeAgo(entry.added_at)}
+          </span>
+          <span className={`chip chip-${entry.level}`}>{entry.level}</span>
+        </span>
       </div>
 
       <p className="word-meaning">{w.meaning}</p>
