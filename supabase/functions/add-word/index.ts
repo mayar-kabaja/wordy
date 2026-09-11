@@ -93,8 +93,6 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const wordOrbKey = Deno.env.get('WORDORB_API_KEY')
 
-  if (!wordOrbKey) return json({ error: 'The word service is not configured yet.' }, 500)
-
   // Who is asking — verified against the token, not taken from the body.
   const asUser = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } }
@@ -113,6 +111,14 @@ Deno.serve(async (req) => {
   const word = cleanWord(body.word)
   if (!word) return json({ error: 'That does not look like an English word.' }, 400)
 
+  // Word Orb only covers single words. Multi-word input is only ever served
+  // from the shared dictionary's bundled phrasal-verb list (step 1 below) —
+  // there's no live API for phrases, so a miss there is a real "not found."
+  const isPhrase = word.includes(' ')
+  if (!isPhrase && !wordOrbKey) {
+    return json({ error: 'The word service is not configured yet.' }, 500)
+  }
+
   const admin = createClient(supabaseUrl, serviceKey)
 
   // 1. Shared dictionary first. A hit here costs one database read and
@@ -128,16 +134,22 @@ Deno.serve(async (req) => {
   let row = existing
   const cached = Boolean(existing)
 
-  // 2. Miss: look it up on Word Orb. Up to 3 attempts total (one initial
-  //    try plus two retries with backoff) before giving up — a single
-  //    transient hiccup shouldn't reach the user as a visible error.
+  // 2. Miss on a phrase means it's not in the bundled phrasal-verb list —
+  //    there's no live API to fall back to, so that's a real "not found."
+  //    Single words go to Word Orb: up to 3 attempts total (one initial try
+  //    plus two retries with backoff) before giving up, since a transient
+  //    hiccup shouldn't reach the user as a visible error.
+  if (!row && isPhrase) {
+    return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
+  }
+
   const RETRY_DELAYS_MS = [600, 1500]
   if (!row) {
     let found
     let lastErr
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
       try {
-        found = await lookup(word, wordOrbKey)
+        found = await lookup(word, wordOrbKey!)
         lastErr = null
         break
       } catch (err) {
@@ -157,13 +169,7 @@ Deno.serve(async (req) => {
       return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
     }
     if (!found) {
-      // A space usually means a phrase or phrasal verb ("turn on", "carry
-      // out") — this dictionary only covers single words, and no amount of
-      // reformatting fixes that, so say so instead of implying a typo.
-      const message = word.includes(' ')
-        ? `"${word}" is a phrase — this dictionary only has single words. Try "${word.split(' ')[0]}" on its own.`
-        : `Could not find "${word}" in the dictionary. Check the spelling.`
-      return json({ error: message }, 404)
+      return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
     }
 
     const { data: inserted, error: insertError } = await admin

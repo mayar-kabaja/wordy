@@ -1,8 +1,10 @@
--- Shared dictionary: one row per unique word, across all users. Entries come
--- from Word Orb (deterministic lookup, no per-call AI cost) or, for older
--- rows, Groq. Word Orb doesn't return an example sentence or an informal
--- "say it like" guide, so example/say/ipa are nullable — the UI already
--- hides them when absent. `note` doubles as etymology for Word Orb rows.
+-- Shared dictionary: one row per unique word or phrase, across all users.
+-- Single words come from Word Orb (deterministic lookup, no per-call AI
+-- cost). Multi-word phrases are bundled once from a static phrasal-verb
+-- dataset (see seed_phrasal_verbs.sql) instead of a live API — there's no
+-- rate limit or outage risk for data that never changes. Neither source
+-- returns every field, so example/say/ipa/note are nullable — the UI
+-- already hides them when absent.
 create table words (
   id uuid primary key default gen_random_uuid(),
   word text not null,
@@ -13,7 +15,7 @@ create table words (
   ipa text,
   emoji text,
   part_of_speech text,
-  source text not null check (source in ('ai', 'manual', 'wordorb')),
+  source text not null check (source in ('ai', 'manual', 'wordorb', 'phrase')),
   created_at timestamptz not null default now()
 );
 create unique index words_word_lower_idx on words (lower(word));
