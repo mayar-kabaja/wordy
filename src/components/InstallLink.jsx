@@ -1,47 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
+const DISMISS_KEY = 'wordy:a2hs-dismissed'
 const isIos = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent)
 const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
 
-// Android/Chrome can trigger the native install prompt directly. iOS has no
-// such API — Safari only lets the user do it themselves via the share sheet
-// — so there we just point at the steps instead of pretending to automate it.
+// Android/Chrome already offers its own install banner once a manifest and
+// icons exist (both added alongside this) — no custom prompt needed there.
+// iOS Safari has no such affordance, so that's the only platform this nudges.
 export default function InstallLink() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [showIosHint, setShowIosHint] = useState(false)
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === '1')
 
-  useEffect(() => {
-    function onBeforeInstall(e) {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstall)
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-  }, [])
+  if (dismissed || !isIos() || isStandalone()) return null
 
-  if (isStandalone()) return null
-  if (!deferredPrompt && !isIos()) return null
-
-  async function handleClick() {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      await deferredPrompt.userChoice
-      setDeferredPrompt(null)
-    } else {
-      setShowIosHint(true)
-    }
+  function dismiss() {
+    localStorage.setItem(DISMISS_KEY, '1')
+    setDismissed(true)
   }
 
   return (
-    <div className="toast">
-      <button
-        type="button"
-        onClick={handleClick}
-        style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', padding: 0 }}
-      >
-        add wordy to your home screen
-        {showIosHint && ' — tap the share icon, then "add to home screen"'}
+    <div className="a2hs-toast">
+      <div className="a2hs-icon" />
+      <div className="a2hs-body">
+        <p className="a2hs-title">keep wordy one tap away</p>
+        <p className="a2hs-text">
+          tap the share icon <span className="a2hs-share">↑</span> then "add to home screen".
+        </p>
+      </div>
+      <button type="button" className="a2hs-close" aria-label="dismiss" onClick={dismiss}>
+        ×
       </button>
     </div>
   )
