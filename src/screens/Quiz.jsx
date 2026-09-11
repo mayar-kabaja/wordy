@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildSession, grade, summarise, SESSION_LENGTH, TYPES } from '../lib/quiz'
+import { buildSession, grade, summarise, SESSION_LENGTH } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 import { playCorrect, playWrong, playQuizStart, playQuizComplete } from '../lib/sound'
@@ -242,7 +242,6 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const q = current.question
   const isRight = chosen !== null && chosen === q.answer
   const timedOut = chosen === -1
-  const optionIsWord = q.type === TYPES.MEANING_WORD || q.type === TYPES.SENTENCE_WORD
 
   return (
     <>
@@ -268,8 +267,8 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
         <span style={{ width: `${(index / session.length) * 100}%` }} />
       </div>
 
-      {q.speak && canSpeak && (
-        <button className="big-listen" onClick={() => speak(q.speak)} aria-label="play the word again">
+      {canSpeak && (
+        <button className="big-listen" onClick={() => speak(q.speak || q.prompt)} aria-label="listen to the question">
           ▸
         </button>
       )}
@@ -288,7 +287,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
               <button className={cls} onClick={() => answer(i)} disabled={chosen !== null}>
                 {opt}
               </button>
-              {optionIsWord && canSpeak && (
+              {canSpeak && (
                 <button
                   type="button"
                   className="speak speak-sm"
