@@ -157,7 +157,13 @@ Deno.serve(async (req) => {
       return json({ error: 'The word service is busy. Try again in a moment.' }, 502)
     }
     if (!found) {
-      return json({ error: `Could not find "${word}" in the dictionary. Check the spelling.` }, 404)
+      // A space usually means a phrase or phrasal verb ("turn on", "carry
+      // out") — this dictionary only covers single words, and no amount of
+      // reformatting fixes that, so say so instead of implying a typo.
+      const message = word.includes(' ')
+        ? `"${word}" is a phrase — this dictionary only has single words. Try "${word.split(' ')[0]}" on its own.`
+        : `Could not find "${word}" in the dictionary. Check the spelling.`
+      return json({ error: message }, 404)
     }
 
     const { data: inserted, error: insertError } = await admin
