@@ -116,6 +116,7 @@ export default function Notebook() {
           className="note-composer-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="what helped this word stick?"
         />
         <div className="note-composer-row">
@@ -123,6 +124,7 @@ export default function Notebook() {
             className="field note-word-field"
             value={wordLink}
             onChange={(e) => setWordLink(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder="link a word (optional)"
           />
           <div className="row" style={{ gap: 7 }}>

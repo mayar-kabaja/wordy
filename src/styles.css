@@ -546,6 +546,7 @@ h1.title.accent { color: var(--purple); }
 
   .topbar { gap: 12px; }
   .topbar .field { order: 3; flex-basis: 100%; }
+  .topbar:not(.topbar-words) .field { display: none; }
   .nav { margin-left: auto; gap: 10px; }
 
   .shell { padding-bottom: 110px; }
@@ -808,6 +809,14 @@ h1.title.accent { color: var(--purple); }
   padding-top: 18px;
 }
 .note-word-field { flex: 1 1 200px; min-width: 0; background: #faf6fc; padding: 12px 20px; font-size: 14px; }
+
+/* A translucent lime button on a white card reads as "nothing here" rather
+   than "not ready yet" — an explicit gray is unambiguous either way. */
+.note-composer-row .btn:disabled {
+  background: var(--line-soft);
+  color: var(--muted-soft);
+  opacity: 1;
+}
 
 .note-swatch {
   width: 30px;

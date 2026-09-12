@@ -178,48 +178,36 @@ export default function App() {
   return (
     <div className="shell">
       <div className="shell-inner shell-inner--wide">
-        <header className="topbar">
+        <header className={`topbar${view === 'words' ? ' topbar-words' : ''}`}>
           <button className="brand brand-link" onClick={() => setView('words')}>
             wordy
           </button>
-          {view === 'words' && (
-            <input
-              className="field"
-              style={{ maxWidth: 260 }}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="search your words…"
-            />
-          )}
+          <input
+            className="field"
+            style={{ maxWidth: 260 }}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search your words…"
+          />
           <nav className="nav">
-            {view === 'words' && (
-              <>
-                <button className="btn btn-ghost" onClick={() => setView('notebook')}>
-                  notebook
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setView('add')}
-                  title={
-                    isOnline
-                      ? undefined
-                      : "you're offline — this word will be added automatically once you're back online"
-                  }
-                >
-                  add a word
-                </button>
-                {queuedCount > 0 && (
-                  <span className="hint">{queuedCount} queued</span>
-                )}
-                <button
-                  className="btn btn-lime"
-                  onClick={() => setView('quiz')}
-                  disabled={!canQuiz}
-                >
-                  start a quiz · 20 questions
-                </button>
-              </>
-            )}
+            <button className="btn btn-ghost" onClick={() => setView('notebook')}>
+              notebook
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setView('add')}
+              title={
+                isOnline
+                  ? undefined
+                  : "you're offline — this word will be added automatically once you're back online"
+              }
+            >
+              add a word
+            </button>
+            {queuedCount > 0 && <span className="hint">{queuedCount} queued</span>}
+            <button className="btn btn-lime" onClick={() => setView('quiz')} disabled={!canQuiz}>
+              start a quiz · 20 questions
+            </button>
             <button className="tab" onClick={() => supabase.auth.signOut()}>
               log out
             </button>
