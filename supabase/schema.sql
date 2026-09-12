@@ -61,3 +61,27 @@ create policy "users manage their own words"
 
 -- Quiz sessions read the whole list sorted by due_at, so index that.
 create index user_words_user_due_idx on user_words (user_id, due_at);
+
+-- Personal memory tricks — separate from the shared dictionary, never
+-- visible to anyone else. `word` is a free-text label the user types, not a
+-- foreign key: there's no autocomplete tying it to a real dictionary entry,
+-- by design, so it stays optional and freeform.
+create table notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  text text not null,
+  word text,
+  color text not null default 'pink' check (color in ('pink', 'purple', 'lime', 'orange', 'white')),
+  pinned boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table notes enable row level security;
+
+create policy "users manage their own notes"
+  on notes for all
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create index notes_user_idx on notes (user_id, pinned desc, created_at desc);

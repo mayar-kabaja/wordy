@@ -110,3 +110,36 @@ export async function saveProgress(updates) {
   const failed = results.find((r) => r.error)
   if (failed) throw failed.error
 }
+
+export async function fetchNotes() {
+  const { data, error } = await supabase
+    .from('notes')
+    .select('*')
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export async function addNote({ text, word, color }) {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('notes')
+    .insert({ user_id: user.id, text, word: word || null, color })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function toggleNotePin(id, pinned) {
+  const { error } = await supabase.from('notes').update({ pinned }).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteNote(id) {
+  const { error } = await supabase.from('notes').delete().eq('id', id)
+  if (error) throw error
+}

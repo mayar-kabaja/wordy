@@ -553,8 +553,8 @@ h1.title.accent { color: var(--purple); }
 
   .bottom-tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
     position: fixed;
     left: 0;
     right: 0;
@@ -571,7 +571,8 @@ h1.title.accent { color: var(--purple); }
     border: 1px solid var(--line);
     background: #fff;
     color: var(--ink);
-    font-size: 14px;
+    font-size: 13px;
+    padding: 0 4px;
   }
   .bottom-tab[aria-current='true'] { background: var(--ink); border-color: var(--ink); color: #fff; }
   .bottom-tab-quiz[aria-current='true'] { background: var(--lime); border-color: var(--lime); color: var(--ink); }
@@ -783,3 +784,80 @@ h1.title.accent { color: var(--purple); }
   .tr-closed-card { align-self: flex-end; }
   .tr-panel { width: 100%; height: min(65vh, 520px); }
 }
+
+/* ---------- notebook ---------- */
+.note-composer { margin-bottom: 26px; }
+
+.note-composer-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink);
+  padding: 0 0 18px;
+}
+.note-composer-input::placeholder { color: var(--faint); }
+
+.note-composer-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 18px;
+}
+.note-word-field { flex: 1 1 200px; min-width: 0; background: #faf6fc; padding: 12px 20px; font-size: 14px; }
+
+.note-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  padding: 0;
+}
+.note-swatch-pink { background: var(--pink); }
+.note-swatch-purple { background: var(--purple); }
+.note-swatch-lime { background: var(--lime); }
+.note-swatch-orange { background: var(--orange); }
+.note-swatch-white { background: var(--card); }
+.note-swatch.selected { border: 2px solid var(--ink); }
+
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.note-card {
+  position: relative;
+  border-radius: 8px 8px 8px 30px;
+  padding: 26px 24px 20px;
+  box-shadow: 0 10px 26px rgba(170, 140, 190, 0.14);
+}
+.note-pink { background: var(--pink); }
+.note-purple { background: var(--purple); }
+.note-lime { background: var(--lime); }
+.note-orange { background: var(--orange); }
+.note-white { background: var(--card); border: 1px solid var(--line-soft); }
+
+.note-text { font-size: 16px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
+
+.note-word-chip { background: rgba(255, 255, 255, 0.75); color: var(--ink); }
+
+.note-pin {
+  position: absolute;
+  right: 20px;
+  top: -9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(60, 30, 70, 0.22);
+  padding: 0;
+}
+.note-pin.pinned { background: var(--ink); }

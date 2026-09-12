@@ -6,6 +6,7 @@ import Auth from './screens/Auth'
 import WordList from './screens/WordList'
 import AddWord from './screens/AddWord'
 import Quiz from './screens/Quiz'
+import Notebook from './screens/Notebook'
 import Translator from './components/Translator'
 
 const cacheKey = (userId) => `wordy:words:${userId}`
@@ -193,6 +194,9 @@ export default function App() {
           <nav className="nav">
             {view === 'words' && (
               <>
+                <button className="btn btn-ghost" onClick={() => setView('notebook')}>
+                  notebook
+                </button>
                 <button
                   className="btn btn-ghost"
                   onClick={() => setView('add')}
@@ -265,6 +269,8 @@ export default function App() {
               />
             </div>
           )}
+
+          {view === 'notebook' && <Notebook />}
         </main>
       </div>
 
@@ -274,6 +280,9 @@ export default function App() {
         </button>
         <button className="bottom-tab" aria-current={view === 'add'} onClick={() => setView('add')}>
           add
+        </button>
+        <button className="bottom-tab" aria-current={view === 'notebook'} onClick={() => setView('notebook')}>
+          notes
         </button>
         <button
           className="bottom-tab bottom-tab-quiz"
