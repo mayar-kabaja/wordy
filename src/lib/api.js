@@ -39,6 +39,28 @@ export async function generateWord(word) {
   return data
 }
 
+// direction is 'auto' | 'en-ar' | 'ar-en'. Returns { translation, direction, note }.
+export async function translateText(text, direction = 'auto') {
+  const { data, error } = await supabase.functions.invoke('translate', {
+    body: { text, direction }
+  })
+
+  if (error) {
+    let message = 'Something went wrong translating that.'
+    try {
+      const body = await error.context?.json()
+      if (body?.error) message = body.error
+    } catch {
+      if (error.message) message = error.message
+    }
+    const err = new Error(message)
+    err.status = error.context?.status
+    throw err
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 // True only for failures the edge function itself flagged as transient — a
 // network drop, a rate limit, or "busy" after it already retried server-side.
 // A bad word, a missing dictionary entry, or a misconfigured key will fail

@@ -6,6 +6,7 @@ import Auth from './screens/Auth'
 import WordList from './screens/WordList'
 import AddWord from './screens/AddWord'
 import Quiz from './screens/Quiz'
+import Translator from './components/Translator'
 
 const cacheKey = (userId) => `wordy:words:${userId}`
 const queueKey = (userId) => `wordy:queue:${userId}`
@@ -283,6 +284,8 @@ export default function App() {
           quiz
         </button>
       </nav>
+
+      <Translator />
     </div>
   )
 }
