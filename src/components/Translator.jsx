@@ -111,15 +111,16 @@ export default function Translator() {
           </div>
         </div>
       ) : (
-        <div className="tr-closed-row">
-          <div className="tr-label-pill">translate a word</div>
-          <button type="button" className="tr-toggle" aria-label="open translator" onClick={toggle}>
-            <span>ع</span>
-            <span className="tr-toggle-slash">/</span>
-            <span className="tr-toggle-a">a</span>
-            {unread && <span className="tr-unread-dot" />}
-          </button>
-        </div>
+        <button type="button" className="tr-closed-card" aria-label="open translator" onClick={toggle}>
+          <span className="tr-closed-icon">
+            <img src="/favicon.svg" alt="" />
+          </span>
+          <span className="tr-closed-text">
+            <span className="tr-closed-title">translate a word</span>
+            <span className="tr-closed-sub">english ↔ عربي</span>
+          </span>
+          {unread && <span className="tr-closed-dot" />}
+        </button>
       )}
     </div>
   )
