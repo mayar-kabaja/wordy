@@ -580,8 +580,6 @@ h1.title.accent { color: var(--purple); }
   .word-foot { gap: 14px; }
 
   .tile-grid--home { grid-template-columns: repeat(2, 1fr); }
-
-  .tr-dock { right: 16px; bottom: 100px; }
 }
 
 /* ---------- translator popup ---------- */
@@ -779,3 +777,9 @@ h1.title.accent { color: var(--purple); }
 .tr-closed-sub { font-size: 12px; color: var(--faint); white-space: nowrap; }
 
 .tr-closed-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lime); flex: none; display: block; }
+
+@media (max-width: 640px) {
+  .tr-dock { left: 16px; right: 16px; bottom: 130px; align-items: stretch; }
+  .tr-closed-card { align-self: flex-end; }
+  .tr-panel { width: 100%; height: min(65vh, 520px); }
+}
