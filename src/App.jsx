@@ -184,7 +184,7 @@ export default function App() {
           </button>
           <input
             className="field"
-            style={{ maxWidth: 260 }}
+            style={{ maxWidth: 200 }}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="search your words…"

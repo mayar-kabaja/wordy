@@ -55,7 +55,7 @@ button:disabled { cursor: default; opacity: .5; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 18px;
   flex-wrap: wrap;
   padding: 26px 0;
 }
