@@ -799,16 +799,17 @@ h1.title.accent { color: var(--purple); }
   padding: 0 0 18px;
 }
 .note-composer-input::placeholder { color: var(--faint); }
+.note-composer-input:focus { outline: none; }
 
 .note-composer-row {
   display: flex;
   gap: 14px;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   border-top: 1px solid var(--line-soft);
   padding-top: 18px;
 }
-.note-word-field { flex: 1 1 200px; min-width: 0; background: #faf6fc; padding: 12px 20px; font-size: 14px; }
 
 /* A translucent lime button on a white card reads as "nothing here" rather
    than "not ready yet" — an explicit gray is unambiguous either way. */
@@ -853,8 +854,6 @@ h1.title.accent { color: var(--purple); }
 .note-white { background: var(--card); border: 1px solid var(--line-soft); }
 
 .note-text { font-size: 16px; line-height: 1.55; color: var(--ink); margin: 0 0 18px; }
-
-.note-word-chip { background: rgba(255, 255, 255, 0.75); color: var(--ink); }
 
 .note-pin {
   position: absolute;

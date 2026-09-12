@@ -5,8 +5,7 @@ import { timeAgo } from '../lib/time'
 const COLORS = ['pink', 'purple', 'lime', 'orange', 'white']
 const FILTERS = [
   { key: 'all', label: 'all notes' },
-  { key: 'pinned', label: 'pinned' },
-  { key: 'linked', label: 'linked to a word' }
+  { key: 'pinned', label: 'pinned' }
 ]
 
 function sortNotes(a, b) {
@@ -20,7 +19,6 @@ export default function Notebook() {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('all')
   const [draft, setDraft] = useState('')
-  const [wordLink, setWordLink] = useState('')
   const [color, setColor] = useState('pink')
   const [saving, setSaving] = useState(false)
 
@@ -45,10 +43,9 @@ export default function Notebook() {
     if (!text || saving) return
     setSaving(true)
     try {
-      const note = await addNote({ text, word: wordLink.trim(), color })
+      const note = await addNote({ text, color })
       setNotes((list) => [note, ...list].sort(sortNotes))
       setDraft('')
-      setWordLink('')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -77,11 +74,7 @@ export default function Notebook() {
     }
   }
 
-  const shown = notes.filter((n) => {
-    if (filter === 'pinned') return n.pinned
-    if (filter === 'linked') return !!n.word
-    return true
-  })
+  const shown = filter === 'pinned' ? notes.filter((n) => n.pinned) : notes
 
   if (loading) {
     return (
@@ -120,13 +113,6 @@ export default function Notebook() {
           placeholder="what helped this word stick?"
         />
         <div className="note-composer-row">
-          <input
-            className="field note-word-field"
-            value={wordLink}
-            onChange={(e) => setWordLink(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            placeholder="link a word (optional)"
-          />
           <div className="row" style={{ gap: 7 }}>
             {COLORS.map((c) => (
               <button
@@ -171,7 +157,6 @@ export default function Notebook() {
               />
               <p className="note-text">{note.text}</p>
               <div className="row" style={{ gap: 10, alignItems: 'center' }}>
-                {note.word && <span className="tag-pill note-word-chip">{note.word}</span>}
                 <span className="hint">{timeAgo(note.created_at)}</span>
                 <button className="link" style={{ marginLeft: 'auto' }} onClick={() => handleDelete(note)}>
                   delete
