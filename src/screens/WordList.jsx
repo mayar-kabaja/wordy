@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import WordCard from '../components/WordCard'
 import { MIN_WORDS } from '../lib/quiz'
-import { backfillExamples } from '../lib/api'
 
 const FILTERS = [
   { key: 'all', label: 'all' },
@@ -29,28 +28,6 @@ function pageNumbers(current, total) {
 export default function WordList({ entries, loading, query, onAdd, onRemove, onEdit }) {
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
-  const [backfillBusy, setBackfillBusy] = useState(false)
-  const [backfillMsg, setBackfillMsg] = useState('')
-
-  async function runBackfill() {
-    setBackfillBusy(true)
-    setBackfillMsg('')
-    try {
-      const r = await backfillExamples()
-      const parts = [`checked ${r.totalMissing} missing out of ${r.totalWords} words`]
-      if (r.filled.length) parts.push(`filled ${r.filled.length}`)
-      if (r.failed.length) {
-        const detail = r.failed.map((f) => `${f.word} (${f.reason})`).join('; ')
-        parts.push(`couldn't fill ${r.failed.length}: ${detail}`)
-      }
-      if (r.remaining > 0) parts.push(`${r.remaining} left — click again`)
-      setBackfillMsg(parts.join(' · '))
-    } catch (err) {
-      setBackfillMsg(err.message)
-    } finally {
-      setBackfillBusy(false)
-    }
-  }
 
   useEffect(() => {
     setPage(1)
@@ -135,16 +112,6 @@ export default function WordList({ entries, loading, query, onAdd, onRemove, onE
         <div>
           <h1 className="title" style={{ margin: 0 }}>your words</h1>
           <h1 className="title accent" style={{ margin: 0 }}>{counts.total} of them</h1>
-        </div>
-        <div>
-          <button className="btn btn-ghost" onClick={runBackfill} disabled={backfillBusy}>
-            {backfillBusy ? 'filling in examples…' : 'fill in missing examples'}
-          </button>
-          {backfillMsg && (
-            <p className="hint" style={{ marginTop: 8, maxWidth: 420 }}>
-              {backfillMsg}
-            </p>
-          )}
         </div>
       </div>
 
