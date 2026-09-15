@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildSession, grade, summarise, SESSION_LENGTH, MIN_WORDS, DATE_FILTERS, filterByAddedDate } from '../lib/quiz'
+import { buildSession, grade, summarise, SESSION_LENGTH, MIN_WORDS, filterByAddedDate } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 import { playCorrect, playWrong, playQuizStart, playQuizComplete } from '../lib/sound'
@@ -21,8 +21,9 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   // opened. Refreshing the list afterwards must not reshuffle a quiz in progress.
   const frozen = useRef(entries)
 
-  const [dateFilter, setDateFilter] = useState('all')
-  const pool = filterByAddedDate(frozen.current, dateFilter)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const pool = filterByAddedDate(frozen.current, dateFrom, dateTo)
   const enoughWords = pool.length >= MIN_WORDS
   const maxQuestions = Math.min(MAX_QUESTIONS, pool.length * 3)
 
@@ -100,19 +101,37 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
             startQuiz()
           }}
         >
-          <span className="label" style={{ marginLeft: 0 }}>which words</span>
-          <div className="choice-row">
-            {DATE_FILTERS.map((f) => (
+          <span className="label" style={{ marginLeft: 0 }}>which words — added between</span>
+          <div className="row" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 6, alignItems: 'center' }}>
+            <input
+              type="date"
+              className="field"
+              style={{ maxWidth: 170 }}
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+            <span className="hint">to</span>
+            <input
+              type="date"
+              className="field"
+              style={{ maxWidth: 170 }}
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+            {(dateFrom || dateTo) && (
               <button
-                key={f.key}
                 type="button"
-                className="choice-pill"
-                aria-pressed={dateFilter === f.key}
-                onClick={() => setDateFilter(f.key)}
+                className="link"
+                onClick={() => {
+                  setDateFrom('')
+                  setDateTo('')
+                }}
               >
-                {f.label}
+                clear
               </button>
-            ))}
+            )}
           </div>
           {!enoughWords && (
             <p className="sub" style={{ marginTop: -14 }}>

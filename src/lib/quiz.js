@@ -14,28 +14,20 @@ const GAP = {
   known: 7 * DAY
 }
 
-export const DATE_FILTERS = [
-  { key: 'all', label: 'all words' },
-  { key: 'today', label: 'added today' },
-  { key: 'recent', label: 'last 5 days' },
-  { key: 'old', label: 'older than 5 days' }
-]
-
-// Restricts the quiz pool to words added in a given window, by `added_at`
-// (when this user added it) — not when the word was first created, which
-// could predate this user entirely in the shared dictionary.
-export function filterByAddedDate(entries, filter) {
-  if (filter === 'all') return entries
-  const now = Date.now()
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
+// Restricts the quiz pool to words added between two calendar dates
+// (inclusive), by `added_at` — when this user added it, not when the word
+// was first created, which could predate this user entirely in the shared
+// dictionary. from/to are 'YYYY-MM-DD' strings from a date input, or '' for
+// an open end. Parsed as local midnight so day boundaries match what the
+// user sees on their own clock, not UTC.
+export function filterByAddedDate(entries, from, to) {
+  if (!from && !to) return entries
+  const fromTime = from ? new Date(`${from}T00:00:00`).getTime() : -Infinity
+  const toTime = to ? new Date(`${to}T23:59:59.999`).getTime() : Infinity
 
   return entries.filter((e) => {
     const added = new Date(e.added_at).getTime()
-    if (filter === 'today') return added >= startOfToday.getTime()
-    if (filter === 'recent') return now - added <= 5 * DAY
-    if (filter === 'old') return now - added > 5 * DAY
-    return true
+    return added >= fromTime && added <= toTime
   })
 }
 
