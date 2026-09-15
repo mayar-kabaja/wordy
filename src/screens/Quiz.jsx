@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildSession, grade, summarise, SESSION_LENGTH } from '../lib/quiz'
+import { buildSession, grade, summarise, SESSION_LENGTH, MIN_WORDS, DATE_FILTERS, filterByAddedDate } from '../lib/quiz'
 import { saveProgress } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 import { playCorrect, playWrong, playQuizStart, playQuizComplete } from '../lib/sound'
@@ -20,12 +20,28 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   // The pool is frozen once, from the list as it was when the quiz screen
   // opened. Refreshing the list afterwards must not reshuffle a quiz in progress.
   const frozen = useRef(entries)
-  const maxQuestions = Math.min(MAX_QUESTIONS, frozen.current.length * 3)
+
+  const [dateFilter, setDateFilter] = useState('all')
+  const pool = filterByAddedDate(frozen.current, dateFilter)
+  const enoughWords = pool.length >= MIN_WORDS
+  const maxQuestions = Math.min(MAX_QUESTIONS, pool.length * 3)
 
   const [started, setStarted] = useState(false)
   const [questionCount, setQuestionCount] = useState(Math.min(SESSION_LENGTH, maxQuestions))
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_TIMER)
   const [session, setSession] = useState([])
+
+  // The pool can shrink when the date filter changes. Snap down to the
+  // largest preset that still fits, rather than an exact number that would
+  // leave none of the pills looking selected.
+  useEffect(() => {
+    setQuestionCount((c) => {
+      if (c <= maxQuestions) return c
+      const fitting = QUESTION_COUNT_PRESETS.filter((n) => n <= maxQuestions)
+      return fitting.length ? fitting[fitting.length - 1] : maxQuestions
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxQuestions])
 
   const [index, setIndex] = useState(0)
   const [chosen, setChosen] = useState(null)
@@ -45,7 +61,8 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const current = session[index]
 
   function startQuiz() {
-    const built = buildSession(frozen.current, questionCount)
+    if (!enoughWords) return
+    const built = buildSession(pool, questionCount)
     setSession(built)
     setStarted(true)
     playQuizStart()
@@ -83,6 +100,26 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
             startQuiz()
           }}
         >
+          <span className="label" style={{ marginLeft: 0 }}>which words</span>
+          <div className="choice-row">
+            {DATE_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                className="choice-pill"
+                aria-pressed={dateFilter === f.key}
+                onClick={() => setDateFilter(f.key)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {!enoughWords && (
+            <p className="sub" style={{ marginTop: -14 }}>
+              only {pool.length} word{pool.length === 1 ? '' : 's'} match this range — need at least {MIN_WORDS} to quiz.
+            </p>
+          )}
+
           <span className="label" style={{ marginLeft: 0 }}>number of questions</span>
           <div className="choice-row">
             {QUESTION_COUNT_PRESETS.filter((n) => n <= maxQuestions).map((n) => (
@@ -114,7 +151,9 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
           </div>
 
           <div className="row" style={{ marginTop: 22 }}>
-            <button className="btn btn-lime">start quiz</button>
+            <button className="btn btn-lime" disabled={!enoughWords}>
+              start quiz
+            </button>
             <button type="button" className="btn btn-ghost" onClick={onQuit}>
               back to my words
             </button>

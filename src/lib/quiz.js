@@ -14,6 +14,31 @@ const GAP = {
   known: 7 * DAY
 }
 
+export const DATE_FILTERS = [
+  { key: 'all', label: 'all words' },
+  { key: 'today', label: 'added today' },
+  { key: 'recent', label: 'last 5 days' },
+  { key: 'old', label: 'older than 5 days' }
+]
+
+// Restricts the quiz pool to words added in a given window, by `added_at`
+// (when this user added it) — not when the word was first created, which
+// could predate this user entirely in the shared dictionary.
+export function filterByAddedDate(entries, filter) {
+  if (filter === 'all') return entries
+  const now = Date.now()
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+
+  return entries.filter((e) => {
+    const added = new Date(e.added_at).getTime()
+    if (filter === 'today') return added >= startOfToday.getTime()
+    if (filter === 'recent') return now - added <= 5 * DAY
+    if (filter === 'old') return now - added > 5 * DAY
+    return true
+  })
+}
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
