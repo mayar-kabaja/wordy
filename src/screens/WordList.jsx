@@ -39,7 +39,10 @@ export default function WordList({ entries, loading, query, onAdd, onRemove, onE
       const r = await backfillExamples()
       const parts = [`checked ${r.totalMissing} missing out of ${r.totalWords} words`]
       if (r.filled.length) parts.push(`filled ${r.filled.length}`)
-      if (r.failed.length) parts.push(`couldn't fill ${r.failed.length}: ${r.failed.join(', ')}`)
+      if (r.failed.length) {
+        const detail = r.failed.map((f) => `${f.word} (${f.reason})`).join('; ')
+        parts.push(`couldn't fill ${r.failed.length}: ${detail}`)
+      }
       if (r.remaining > 0) parts.push(`${r.remaining} left — click again`)
       setBackfillMsg(parts.join(' · '))
     } catch (err) {
@@ -138,7 +141,7 @@ export default function WordList({ entries, loading, query, onAdd, onRemove, onE
             {backfillBusy ? 'filling in examples…' : 'fill in missing examples'}
           </button>
           {backfillMsg && (
-            <p className="hint" style={{ marginTop: 8, maxWidth: 280 }}>
+            <p className="hint" style={{ marginTop: 8, maxWidth: 420 }}>
               {backfillMsg}
             </p>
           )}

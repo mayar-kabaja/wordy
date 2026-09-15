@@ -32,36 +32,57 @@ Reply with a single JSON object and no other text, using exactly this key:
 
 If you cannot write one, reply {"example": ""}.`
 
-async function generateExample(word: string, meaning: string, apiKey: string): Promise<string | null> {
+async function callGroq(word: string, meaning: string, apiKey: string): Promise<string | null> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      temperature: 0.4,
+      max_tokens: 150,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: EXAMPLE_SYSTEM_PROMPT },
+        { role: 'user', content: `<word>${word}</word>\n<meaning>${meaning}</meaning>` }
+      ]
+    }),
+    signal: AbortSignal.timeout(8000)
+  })
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => '')
+    const err = new Error(`groq ${res.status}: ${bodyText.slice(0, 200)}`)
+    ;(err as Error & { status?: number }).status = res.status
+    throw err
+  }
+  const payload = await res.json()
+  const content = payload?.choices?.[0]?.message?.content
+  if (!content) throw new Error('groq returned no content')
+  const parsed = JSON.parse(content)
+  const example = typeof parsed.example === 'string' ? parsed.example.trim() : ''
+  return example || null
+}
+
+// Returns the example, or null with a reason string explaining why not — so
+// a failure can actually be diagnosed instead of silently disappearing.
+// Retries once on a rate limit specifically, since firing many of these in a
+// row is exactly what trips one.
+async function generateExample(word: string, meaning: string, apiKey: string): Promise<{ example: string | null; reason: string | null }> {
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0.4,
-        max_tokens: 150,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: EXAMPLE_SYSTEM_PROMPT },
-          { role: 'user', content: `<word>${word}</word>\n<meaning>${meaning}</meaning>` }
-        ]
-      }),
-      signal: AbortSignal.timeout(8000)
-    })
-    if (!res.ok) return null
-    const payload = await res.json()
-    const content = payload?.choices?.[0]?.message?.content
-    if (!content) return null
-    const parsed = JSON.parse(content)
-    const example = typeof parsed.example === 'string' ? parsed.example.trim() : ''
-    return example || null
+    return { example: await callGroq(word, meaning, apiKey), reason: null }
   } catch (err) {
-    console.error('groq example generation failed:', err)
-    return null
+    const status = (err as Error & { status?: number }).status
+    if (status === 429) {
+      await new Promise((r) => setTimeout(r, 2000))
+      try {
+        return { example: await callGroq(word, meaning, apiKey), reason: null }
+      } catch (err2) {
+        return { example: null, reason: (err2 as Error).message }
+      }
+    }
+    return { example: null, reason: (err as Error).message }
   }
 }
 
@@ -104,17 +125,20 @@ Deno.serve(async (req) => {
   const batch = missing.slice(0, BATCH_LIMIT)
 
   const filled: string[] = []
-  const failed: string[] = []
+  const failed: { word: string; reason: string }[] = []
 
+  // Paced deliberately — firing these back-to-back is what trips Groq's
+  // rate limit partway through a batch in the first place.
   for (const w of batch) {
-    const example = await generateExample(w.word, w.meaning, groqKey)
+    const { example, reason } = await generateExample(w.word, w.meaning, groqKey)
     if (!example) {
-      failed.push(w.word)
-      continue
+      failed.push({ word: w.word, reason: reason || 'unknown' })
+    } else {
+      const { error: updateError } = await admin.from('words').update({ example }).eq('id', w.id)
+      if (updateError) failed.push({ word: w.word, reason: updateError.message })
+      else filled.push(w.word)
     }
-    const { error: updateError } = await admin.from('words').update({ example }).eq('id', w.id)
-    if (updateError) failed.push(w.word)
-    else filled.push(w.word)
+    await new Promise((r) => setTimeout(r, 400))
   }
 
   return json({
