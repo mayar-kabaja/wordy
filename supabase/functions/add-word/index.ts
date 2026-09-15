@@ -109,7 +109,7 @@ async function generateExample(word: string, meaning: string, apiKey: string): P
       body: JSON.stringify({
         model: GROQ_MODEL,
         temperature: 0.4,
-        max_tokens: 150,
+        max_tokens: 400,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: EXAMPLE_SYSTEM_PROMPT },
