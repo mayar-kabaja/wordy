@@ -23,10 +23,6 @@ function shuffle(arr) {
   return a
 }
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-
 function weightOf(entry, now) {
   const base = LEVEL_WEIGHT[entry.level] ?? 1
   const due = new Date(entry.due_at).getTime() <= now
@@ -79,56 +75,7 @@ function drawWeighted(pool, count, now) {
   return chosen
 }
 
-// ---------- question types ----------
-
-export const TYPES = {
-  LISTEN_MEANING: 'listen → meaning',
-  WORD_MEANING: 'word → meaning',
-  MEANING_WORD: 'meaning → word',
-  SENTENCE_WORD: 'sentence → word',
-  LISTEN_WORD: 'listen → word'
-}
-
-function blankOut(example, word) {
-  const pattern = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\w*\\b`, 'gi')
-  return example.replace(pattern, '______')
-}
-
-// Plausible wrong spellings for the listen → word type. Real learners misspell
-// by doubling, dropping and swapping — random letters would be too easy.
-export function misspellings(word) {
-  const w = word.toLowerCase()
-  const out = new Set()
-  const swaps = [
-    ['ei', 'ie'], ['ie', 'ei'], ['ph', 'f'], ['ance', 'ence'], ['ence', 'ance'],
-    ['able', 'ible'], ['ible', 'able'], ['ary', 'ery'], ['tion', 'sion'],
-    ['ous', 'ious'], ['cede', 'ceed'], ['ll', 'l'], ['ss', 's']
-  ]
-  for (const [a, b] of swaps) {
-    if (w.includes(a)) out.add(w.replace(a, b))
-  }
-  // double an interior consonant
-  for (let i = 1; i < w.length - 1; i++) {
-    if (!'aeiou'.includes(w[i]) && w[i] !== w[i + 1]) {
-      out.add(w.slice(0, i) + w[i] + w.slice(i))
-      break
-    }
-  }
-  // swap two adjacent interior letters
-  if (w.length > 4) {
-    const i = Math.floor(w.length / 2)
-    out.add(w.slice(0, i - 1) + w[i] + w[i - 1] + w.slice(i + 1))
-  }
-  // drop a vowel
-  for (let i = 1; i < w.length - 1; i++) {
-    if ('aeiou'.includes(w[i])) {
-      out.add(w.slice(0, i) + w.slice(i + 1))
-      break
-    }
-  }
-  out.delete(w)
-  return [...out]
-}
+// ---------- question ----------
 
 function otherWords(entry, all, n, field) {
   const pool = all.filter((e) => e.id !== entry.id && e.words?.[field])
@@ -140,44 +87,12 @@ function options(correct, distractors) {
   return { list, answer: list.indexOf(correct) }
 }
 
+// One format: the definition is shown, the learner picks the matching word
+// from four options.
 export function makeQuestion(entry, all) {
   const w = entry.words
-  const enoughForMeaning = all.filter((e) => e.id !== entry.id && e.words?.meaning).length >= 3
-  const enoughForWord = all.filter((e) => e.id !== entry.id && e.words?.word).length >= 3
-
-  const available = []
-  if (enoughForMeaning) available.push(TYPES.WORD_MEANING, TYPES.LISTEN_MEANING)
-  if (enoughForWord) available.push(TYPES.MEANING_WORD, TYPES.LISTEN_WORD)
-  if (w.example && enoughForWord) available.push(TYPES.SENTENCE_WORD)
-  if (available.length === 0) available.push(TYPES.WORD_MEANING)
-
-  const type = pick(available)
-
-  switch (type) {
-    case TYPES.LISTEN_MEANING: {
-      const { list, answer } = options(w.meaning, otherWords(entry, all, 3, 'meaning'))
-      return { type, speak: w.word, prompt: 'what does this word mean?', options: list, answer }
-    }
-    case TYPES.MEANING_WORD: {
-      const { list, answer } = options(w.word, otherWords(entry, all, 3, 'word'))
-      return { type, prompt: `which word means "${w.meaning}"?`, options: list, answer, small: true }
-    }
-    case TYPES.SENTENCE_WORD: {
-      const { list, answer } = options(w.word, otherWords(entry, all, 3, 'word'))
-      return { type, prompt: blankOut(w.example, w.word), options: list, answer, small: true }
-    }
-    case TYPES.LISTEN_WORD: {
-      let wrong = misspellings(w.word).slice(0, 3)
-      if (wrong.length < 3) wrong = [...wrong, ...otherWords(entry, all, 3 - wrong.length, 'word')]
-      const { list, answer } = options(w.word, wrong.slice(0, 3))
-      return { type, speak: w.word, prompt: 'how is it spelled?', options: list, answer }
-    }
-    case TYPES.WORD_MEANING:
-    default: {
-      const { list, answer } = options(w.meaning, otherWords(entry, all, 3, 'meaning'))
-      return { type: TYPES.WORD_MEANING, prompt: w.word, options: list, answer }
-    }
-  }
+  const { list, answer } = options(w.word, otherWords(entry, all, 3, 'word'))
+  return { type: 'definition → word', prompt: w.meaning, options: list, answer }
 }
 
 // ---------- grading ----------

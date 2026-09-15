@@ -49,9 +49,6 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
     setSession(built)
     setStarted(true)
     playQuizStart()
-    // Called synchronously from this click, so it still counts as a user
-    // gesture for autoplay policies — a useEffect firing after commit wouldn't.
-    if (built[0]?.question.speak) speak(built[0].question.speak)
   }
 
   // Per-question countdown. Only runs while unanswered; hitting zero counts
@@ -180,10 +177,8 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
 
   async function next() {
     if (index + 1 < session.length) {
-      const upcoming = session[index + 1]
       setIndex((i) => i + 1)
       setChosen(null)
-      if (upcoming?.question.speak) speak(upcoming.question.speak)
       return
     }
 
@@ -242,6 +237,7 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
   const q = current.question
   const isRight = chosen !== null && chosen === q.answer
   const timedOut = chosen === -1
+  const answerSay = [current.entry.words.say, current.entry.words.ipa].filter(Boolean).join(' · ')
 
   return (
     <>
@@ -268,12 +264,12 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
       </div>
 
       {canSpeak && (
-        <button className="big-listen" onClick={() => speak(q.speak || q.prompt)} aria-label="listen to the question">
+        <button className="big-listen" onClick={() => speak(q.prompt)} aria-label="listen to the question">
           ▸
         </button>
       )}
 
-      <h2 className={q.small ? 'prompt prompt-small' : 'prompt'}>{q.prompt}</h2>
+      <h2 className="prompt prompt-small">{q.prompt}</h2>
 
       <div className="options">
         {q.options.map((opt, i) => {
@@ -308,20 +304,30 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
       {chosen !== null && (
         <>
           <p className="feedback">
-            {timedOut ? (
-              <>
-                time&apos;s up. <b>{current.entry.words.word}</b> means {current.entry.words.meaning}
-              </>
-            ) : isRight ? (
-              <>
-                that&apos;s it. <b>{current.entry.words.word}</b> — {current.entry.words.meaning}
-              </>
-            ) : (
-              <>
-                not this time. <b>{current.entry.words.word}</b> means {current.entry.words.meaning}
-              </>
-            )}
+            {timedOut ? "time's up." : isRight ? "that's it!" : 'not this time.'}
           </p>
+
+          <div className="wc-head">
+            <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+              {canSpeak && (
+                <button
+                  className="speak"
+                  onClick={() => speak(current.entry.words.word)}
+                  aria-label={`listen to ${current.entry.words.word}`}
+                >
+                  ▸
+                </button>
+              )}
+              <div>
+                <div className="wc-name">{current.entry.words.word}</div>
+                {answerSay && <div className="wc-say">{answerSay}</div>}
+              </div>
+            </div>
+          </div>
+          <p className="word-meaning">{current.entry.words.meaning}</p>
+          {current.entry.words.example && <p className="word-example">{current.entry.words.example}</p>}
+          {current.entry.words.note && <p className="wc-note">{current.entry.words.note}</p>}
+
           <div className="row" style={{ marginTop: 20 }}>
             <button className="btn" onClick={next} autoFocus>
               {index + 1 === session.length ? 'see how you did' : 'next'}
