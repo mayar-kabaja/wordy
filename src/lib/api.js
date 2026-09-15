@@ -143,3 +143,21 @@ export async function deleteNote(id) {
   const { error } = await supabase.from('notes').delete().eq('id', id)
   if (error) throw error
 }
+
+// One-time maintenance call — fills in a missing example for words already
+// in the caller's own collection. Safe to call more than once.
+export async function backfillExamples() {
+  const { data, error } = await supabase.functions.invoke('backfill-examples')
+  if (error) {
+    let message = 'Something went wrong filling in examples.'
+    try {
+      const body = await error.context?.json()
+      if (body?.error) message = body.error
+    } catch {
+      if (error.message) message = error.message
+    }
+    throw new Error(message)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
