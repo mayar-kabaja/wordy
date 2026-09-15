@@ -3,6 +3,7 @@ import { buildSession, grade, summarise, SESSION_LENGTH, MIN_WORDS, filterByAdde
 import { saveProgress } from '../lib/api'
 import { speak, canSpeak } from '../lib/speech'
 import { playCorrect, playWrong, playQuizStart, playQuizComplete } from '../lib/sound'
+import DatePicker from '../components/DatePicker'
 
 const MAX_QUESTIONS = 50
 const TIMER_OPTIONS = [0, 10, 15, 20, 30, 45, 60]
@@ -103,23 +104,9 @@ export default function Quiz({ entries, onFinish, onQuit, onRestart }) {
         >
           <span className="label" style={{ marginLeft: 0 }}>which words — added between</span>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 6, alignItems: 'center' }}>
-            <input
-              type="date"
-              className="field"
-              style={{ maxWidth: 170 }}
-              value={dateFrom}
-              max={dateTo || undefined}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
+            <DatePicker value={dateFrom} onChange={setDateFrom} max={dateTo} placeholder="any date" />
             <span className="hint">to</span>
-            <input
-              type="date"
-              className="field"
-              style={{ maxWidth: 170 }}
-              value={dateTo}
-              min={dateFrom || undefined}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
+            <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom} placeholder="any date" />
             {(dateFrom || dateTo) && (
               <button
                 type="button"
