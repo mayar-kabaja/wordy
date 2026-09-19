@@ -138,9 +138,6 @@ export default function WordList({
                 <th>pronunciation</th>
                 <th>meaning</th>
                 <th>example</th>
-                <th>level</th>
-                <th>progress</th>
-                <th>added</th>
                 <th>actions</th>
               </tr>
             </thead>
